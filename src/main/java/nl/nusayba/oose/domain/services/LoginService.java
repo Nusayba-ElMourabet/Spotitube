@@ -1,8 +1,8 @@
 package nl.nusayba.oose.domain.services;
 
-
 import nl.nusayba.oose.domain.dto.LoginRequestDTO;
 import nl.nusayba.oose.domain.dto.LoginResponseDTO;
+import nl.nusayba.oose.domain.exceptions.AuthenticationException;
 
 public class LoginService {
 
@@ -16,7 +16,7 @@ public class LoginService {
             response.setToken("dummy-token");
             return response;
         } else {
-            return null;
+            throw new AuthenticationException("Invalid username or password");
         }
     }
 }

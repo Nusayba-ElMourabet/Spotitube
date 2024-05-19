@@ -8,6 +8,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import nl.nusayba.oose.domain.dto.LoginRequestDTO;
 import nl.nusayba.oose.domain.dto.LoginResponseDTO;
+import nl.nusayba.oose.domain.exceptions.AuthenticationException;
 import nl.nusayba.oose.domain.services.LoginService;
 
 @Path("/login")
@@ -17,22 +18,15 @@ public class LoginResource {
     private LoginService loginService = new LoginService();
 
 
-    //    @POST
-//    public LoginResponseDTO login(LoginRequestDTO request) {
-//        System.out.println(request.getPassword());
-//
-//        return null;
-//    }
     @POST
     public Response login(LoginRequestDTO request) {
-        System.out.println(request.getUser());
-        System.out.println(request.getPassword());
-
-        LoginResponseDTO response = loginService.authenticate(request);
-        if (response != null) {
+        try {
+            LoginResponseDTO response = loginService.authenticate(request);
             return Response.ok(response).build();
-        } else {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
+        } catch (AuthenticationException e) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(e.getMessage())
+                    .build();
         }
     }
 }

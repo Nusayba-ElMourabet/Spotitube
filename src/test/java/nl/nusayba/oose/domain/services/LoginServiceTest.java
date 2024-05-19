@@ -2,6 +2,7 @@ package nl.nusayba.oose.domain.services;
 
 import nl.nusayba.oose.domain.dto.LoginRequestDTO;
 import nl.nusayba.oose.domain.dto.LoginResponseDTO;
+import nl.nusayba.oose.domain.exceptions.AuthenticationException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,7 +29,8 @@ public class LoginServiceTest {
         request.setUser("invalidUser");
         request.setPassword("invalidPassword");
 
-        LoginResponseDTO response = loginService.authenticate(request);
-        assertNull(response);
+        assertThrows(AuthenticationException.class, () -> {
+            loginService.authenticate(request);
+        });
     }
 }
