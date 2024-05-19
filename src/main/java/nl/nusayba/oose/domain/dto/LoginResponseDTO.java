@@ -1,4 +1,4 @@
-package nl.nusayba.oose.dto;
+package nl.nusayba.oose.domain.dto;
 
 public class LoginResponseDTO {
     private String token;

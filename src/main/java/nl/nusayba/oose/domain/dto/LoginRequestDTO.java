@@ -1,4 +1,4 @@
-package nl.nusayba.oose.dto;
+package nl.nusayba.oose.domain.dto;
 
 import java.awt.*;
 
