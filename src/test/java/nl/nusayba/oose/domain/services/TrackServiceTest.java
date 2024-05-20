@@ -21,11 +21,11 @@ public class TrackServiceTest {
     public void testGetTracksWithValidToken() {
         List<TrackDTO> tracks = trackService.getTracks("dummy-token");
         assertNotNull(tracks);
-        assertEquals(2, tracks.size());
+        assertEquals(8, tracks.size());
 
         TrackDTO firstTrack = tracks.get(0);
         assertEquals(1, firstTrack.getId());
-        assertEquals("Song for someone", firstTrack.getTitle());
+        assertEquals("Master of Puppets", firstTrack.getTitle());
         assertEquals("The Frames", firstTrack.getPerformer());
 
         TrackDTO secondTrack = tracks.get(1);
