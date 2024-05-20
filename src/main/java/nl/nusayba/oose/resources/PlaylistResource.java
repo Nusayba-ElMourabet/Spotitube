@@ -1,10 +1,8 @@
 package nl.nusayba.oose.resources;
 
-import jakarta.ws.rs.Path;
-
-
 import nl.nusayba.oose.domain.dto.PlaylistDTO;
 import nl.nusayba.oose.domain.services.PlaylistService;
+import nl.nusayba.oose.domain.services.TrackService;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -19,7 +17,7 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public class PlaylistResource {
 
-    private PlaylistService playlistService = new PlaylistService();
+    private PlaylistService playlistService = new PlaylistService(new TrackService());
 
     @GET
     public Response getPlaylists(@QueryParam("token") String token) {
@@ -32,7 +30,21 @@ public class PlaylistResource {
                     .build();
         }
     }
+
+    @GET
+    @Path("/specific")
+    public Response getPlaylistById(@QueryParam("token") String token, @QueryParam("playlistId") int playlistId) {
+        PlaylistDTO playlist = playlistService.getPlaylistById(token, playlistId);
+        if (playlist != null) {
+            return Response.ok(playlist).build();
+        } else {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity("Invalid token or playlist not found")
+                    .build();
+        }
+    }
 }
+
 
 
 //@Path("/playlist")
