@@ -8,12 +8,13 @@ public class LoginService {
 
     private static final String USERNAME = "user";
     private static final String PASSWORD = "password";
+    private static final String TOKEN = "dummy-token"; // Ensure this matches the token used in subsequent requests
 
     public LoginResponseDTO authenticate(LoginRequestDTO request) {
         if (USERNAME.equals(request.getUser()) && PASSWORD.equals(request.getPassword())) {
             LoginResponseDTO response = new LoginResponseDTO();
             response.setUser(request.getUser());
-            response.setToken("dummy-token");
+            response.setToken(TOKEN);
             return response;
         } else {
             throw new AuthenticationException("Invalid username or password");

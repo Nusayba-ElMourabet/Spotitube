@@ -20,6 +20,9 @@ public class LoginResource {
 
     @POST
     public Response login(LoginRequestDTO request) {
+        System.out.println(request.getUser());
+        System.out.println(request.getPassword());
+
         try {
             LoginResponseDTO response = loginService.authenticate(request);
             return Response.ok(response).build();
