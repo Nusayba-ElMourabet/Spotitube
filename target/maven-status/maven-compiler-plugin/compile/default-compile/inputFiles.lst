@@ -1,3 +1,4 @@
+D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\datasource\TrackDAO.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\CorsFilter.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\resources\PlaylistResource.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\dto\LoginRequestDTO.java
@@ -8,6 +9,7 @@ D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\dto\LoginResponseDTO.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\dto\PlaylistDTO.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\exceptions\AuthenticationException.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\SpotitubeApplication.java
+D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\datasource\PlaylistDAO.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\dto\TrackDTO.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\resources\TrackResource.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\resources\HelloWorldResource.java

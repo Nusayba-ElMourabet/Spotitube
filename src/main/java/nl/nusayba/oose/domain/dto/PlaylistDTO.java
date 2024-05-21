@@ -3,6 +3,17 @@ package nl.nusayba.oose.domain.dto;
 import java.util.List;
 
 public class PlaylistDTO {
+    public PlaylistDTO() {
+        // Default constructor
+    }
+
+    public PlaylistDTO(int id, String name, boolean owner, List<TrackDTO> tracks) {
+        this.id = id;
+        this.name = name;
+        this.owner = owner;
+        this.tracks = tracks;
+    }
+
     private int id;
     private String name;
     private boolean owner;
