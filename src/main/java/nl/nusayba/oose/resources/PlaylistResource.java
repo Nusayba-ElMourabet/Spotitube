@@ -1,9 +1,12 @@
 package nl.nusayba.oose.resources;
 
 import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
 import nl.nusayba.oose.domain.dto.PlaylistDTO;
 import nl.nusayba.oose.domain.services.PlaylistService;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -17,36 +20,23 @@ public class PlaylistResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<PlaylistDTO> getAllPlaylists() {
-        return playlistService.getAllPlaylists();
+    public Response getPlaylists(@QueryParam("token") String token) {
+        List<PlaylistDTO> playlists = playlistService.getPlaylists(token);
+        if (playlists == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        return Response.ok(playlists).build();
     }
 
     @GET
-    @Path("/{id}")
+    @Path("/specific")
     @Produces(MediaType.APPLICATION_JSON)
-    public PlaylistDTO getPlaylistById(@PathParam("id") int id) {
-        return playlistService.getPlaylistById(id);
-    }
-
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response addPlaylist(PlaylistDTO playlist) {
-        playlistService.addPlaylist(playlist);
-        return Response.status(Response.Status.CREATED).build();
-    }
-
-    @PUT
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response updatePlaylist(PlaylistDTO playlist) {
-        playlistService.updatePlaylist(playlist);
-        return Response.status(Response.Status.OK).build();
-    }
-
-    @DELETE
-    @Path("/{id}")
-    public Response deletePlaylist(@PathParam("id") int id) {
-        playlistService.deletePlaylist(id);
-        return Response.status(Response.Status.NO_CONTENT).build();
+    public Response getPlaylistById(@QueryParam("token") String token, @QueryParam("playlistId") int playlistId) {
+        PlaylistDTO playlist = playlistService.getPlaylistById(token, playlistId);
+        if (playlist == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        return Response.ok(playlist).build();
     }
 }
 

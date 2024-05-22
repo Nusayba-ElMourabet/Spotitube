@@ -1,35 +1,42 @@
 package nl.nusayba.oose.domain.services;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-
+import nl.nusayba.oose.datasource.PlaylistDAO;
+import nl.nusayba.oose.datasource.TrackDAO;
 import nl.nusayba.oose.domain.dto.PlaylistDTO;
-import nl.nusayba.oose.domain.interfaces.IPlaylistDAO;
 
 import java.util.List;
 
 @ApplicationScoped
 public class PlaylistService {
 
+    private static final String HARDCODED_TOKEN = "dummy-token";
+
     @Inject
-    private IPlaylistDAO playlistDAO;
+    private PlaylistDAO playlistDAO;
 
-    public List<PlaylistDTO> getAllPlaylists() {
-        return playlistDAO.getAllPlaylists();
+    @Inject
+    private TrackDAO trackDAO;
+
+    // No-argument constructor for CDI
+    public PlaylistService() {
     }
 
-    public PlaylistDTO getPlaylistById(int id) {
-        return playlistDAO.getPlaylistById(id);
+    public List<PlaylistDTO> getPlaylists(String token) {
+        if (!HARDCODED_TOKEN.equals(token)) {
+            return null;
+        }
+        return playlistDAO.getPlaylists();
     }
 
-    public void addPlaylist(PlaylistDTO playlist) {
-        playlistDAO.insertPlaylist(playlist);
-    }
-
-    public void updatePlaylist(PlaylistDTO playlist) {
-        playlistDAO.updatePlaylist(playlist);
-    }
-
-    public void deletePlaylist(int id) {
-        playlistDAO.deletePlaylist(id);
+    public PlaylistDTO getPlaylistById(String token, int playlistId) {
+        if (!HARDCODED_TOKEN.equals(token)) {
+            return null;
+        }
+        PlaylistDTO playlist = playlistDAO.getPlaylistById(playlistId);
+        if (playlist != null) {
+            playlist.setTracks(trackDAO.getTracks());
+        }
+        return playlist;
     }
 }
