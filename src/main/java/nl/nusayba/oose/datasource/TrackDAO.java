@@ -3,42 +3,127 @@ package nl.nusayba.oose.datasource;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import nl.nusayba.oose.domain.dto.TrackDTO;
-
+import nl.nusayba.oose.domain.interfaces.ITrackDAO;
+import jakarta.inject.Inject;
+import nl.nusayba.oose.util.DatabaseProperties;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.*;
 
 @ApplicationScoped
-public class TrackDAO {
+public class TrackDAO implements ITrackDAO {
 
-     private List<TrackDTO> tracks;
+    @Inject
+    private DatabaseProperties dbProperties;
 
-    public TrackDAO() {
-        tracks = new ArrayList<>();
-        tracks.add(createTrack(1, "Master of Puppets", "Metallica", 515, "Master of Puppets", 0, null, null, false));
-        tracks.add(createTrack(2, "Back in Black", "AC/DC", 255, "Back in Black", 37, "25-07-1980", "Classic rock song", true));
-        tracks.add(createTrack(3, "Thriller", "Michael Jackson", 357, "Thriller", 0, null, null, false));
-        tracks.add(createTrack(4, "Like a Prayer", "Madonna", 345, "Like a Prayer", 50, "21-03-1989", "Pop song", true));
-        tracks.add(createTrack(5, "So What", "Miles Davis", 540, "Kind of Blue", 0, null, null, false));
-        tracks.add(createTrack(6, "Take Five", "Dave Brubeck", 324, "Time Out", 0, null, null, false));
-        tracks.add(createTrack(7, "Fur Elise", "Beethoven", 240, "Classical Hits", 0, null, null, false));
-        tracks.add(createTrack(8, "The Four Seasons", "Vivaldi", 2520, "The Four Seasons", 0, null, null, false));
+    private String url;
+    private String username;
+    private String password;
+
+    @Inject
+    public void init() {
+        this.url = dbProperties.getUrl();
+        this.username = dbProperties.getUsername();
+        this.password = dbProperties.getPassword();
     }
 
-    public List<TrackDTO> getTracks() {
+    @Override
+    public List<TrackDTO> getAllTracks() {
+        List<TrackDTO> tracks = new ArrayList<>();
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("SELECT * FROM Tracks")) {
+
+            while (resultSet.next()) {
+                TrackDTO track = new TrackDTO();
+                track.setId(resultSet.getInt("id"));
+                track.setTitle(resultSet.getString("title"));
+                track.setPerformer(resultSet.getString("performer"));
+                track.setDuration(resultSet.getInt("duration"));
+                track.setAlbum(resultSet.getString("album"));
+                track.setPlaycount(resultSet.getInt("playcount"));
+                track.setPublicationDate(resultSet.getString("publication_date"));
+                track.setDescription(resultSet.getString("description"));
+                track.setOfflineAvailable(resultSet.getBoolean("offline_available"));
+                tracks.add(track);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return tracks;
     }
 
-    private TrackDTO createTrack(int id, String title, String performer, int duration, String album, int playcount, String publicationDate, String description, boolean offlineAvailable) {
-        TrackDTO track = new TrackDTO();
-        track.setId(id);
-        track.setTitle(title);
-        track.setPerformer(performer);
-        track.setDuration(duration);
-        track.setAlbum(album);
-        track.setPlaycount(playcount);
-        track.setPublicationDate(publicationDate);
-        track.setDescription(description);
-        track.setOfflineAvailable(offlineAvailable);
+    @Override
+    public TrackDTO getTrackById(int id) {
+        TrackDTO track = null;
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM Tracks WHERE id = ?")) {
+            statement.setInt(1, id);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    track = new TrackDTO();
+                    track.setId(resultSet.getInt("id"));
+                    track.setTitle(resultSet.getString("title"));
+                    track.setPerformer(resultSet.getString("performer"));
+                    track.setDuration(resultSet.getInt("duration"));
+                    track.setAlbum(resultSet.getString("album"));
+                    track.setPlaycount(resultSet.getInt("playcount"));
+                    track.setPublicationDate(resultSet.getString("publication_date"));
+                    track.setDescription(resultSet.getString("description"));
+                    track.setOfflineAvailable(resultSet.getBoolean("offline_available"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return track;
+    }
+
+    @Override
+    public void insertTrack(TrackDTO track) {
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             PreparedStatement statement = connection.prepareStatement("INSERT INTO Tracks (title, performer, duration, album, playcount, publication_date, description, offline_available) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
+            statement.setString(1, track.getTitle());
+            statement.setString(2, track.getPerformer());
+            statement.setInt(3, track.getDuration());
+            statement.setString(4, track.getAlbum());
+            statement.setInt(5, track.getPlaycount());
+            statement.setDate(6, Date.valueOf(track.getPublicationDate()));
+            statement.setString(7, track.getDescription());
+            statement.setBoolean(8, track.isOfflineAvailable());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void updateTrack(TrackDTO track) {
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             PreparedStatement statement = connection.prepareStatement("UPDATE Tracks SET title = ?, performer = ?, duration = ?, album = ?, playcount = ?, publication_date = ?, description = ?, offline_available = ? WHERE id = ?")) {
+            statement.setString(1, track.getTitle());
+            statement.setString(2, track.getPerformer());
+            statement.setInt(3, track.getDuration());
+            statement.setString(4, track.getAlbum());
+            statement.setInt(5, track.getPlaycount());
+            statement.setDate(6, Date.valueOf(track.getPublicationDate()));
+            statement.setString(7, track.getDescription());
+            statement.setBoolean(8, track.isOfflineAvailable());
+            statement.setInt(9, track.getId());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void deleteTrack(int id) {
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             PreparedStatement statement = connection.prepareStatement("DELETE FROM Tracks WHERE id = ?")) {
+            statement.setInt(1, id);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }

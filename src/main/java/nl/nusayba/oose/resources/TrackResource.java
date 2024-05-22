@@ -1,32 +1,53 @@
 package nl.nusayba.oose.resources;
 
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
 import  nl.nusayba.oose.domain.dto.TrackDTO;
 import  nl.nusayba.oose.domain.services.TrackService;
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 
+
 @Path("/tracks")
-@Produces(MediaType.APPLICATION_JSON)
 public class TrackResource {
 
-    private TrackService trackService = new TrackService();
+    @Inject
+    private TrackService trackService;
 
     @GET
-    public Response getTracks(@QueryParam("token") String token) {
-        List<TrackDTO> tracks = trackService.getTracks(token);
-        if (tracks != null) {
-            return Response.ok(tracks).build();
-        } else {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity("Invalid token")
-                    .build();
-        }
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<TrackDTO> getAllTracks() {
+        return trackService.getAllTracks();
+    }
+
+    @GET
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public TrackDTO getTrackById(@PathParam("id") int id) {
+        return trackService.getTrackById(id);
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response addTrack(TrackDTO track) {
+        trackService.addTrack(track);
+        return Response.status(Response.Status.CREATED).build();
+    }
+
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updateTrack(TrackDTO track) {
+        trackService.updateTrack(track);
+        return Response.status(Response.Status.OK).build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public Response deleteTrack(@PathParam("id") int id) {
+        trackService.deleteTrack(id);
+        return Response.status(Response.Status.NO_CONTENT).build();
     }
 }
