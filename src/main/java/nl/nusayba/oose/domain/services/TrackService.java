@@ -1,24 +1,35 @@
 package nl.nusayba.oose.domain.services;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import nl.nusayba.oose.datasource.TrackDAO;
 import nl.nusayba.oose.domain.dto.TrackDTO;
+import nl.nusayba.oose.domain.interfaces.ITrackDAO;
 
-import java.util.ArrayList;
 import java.util.List;
 
-
+@ApplicationScoped
 public class TrackService {
 
-    private static final String HARDCODED_TOKEN = "dummy-token";
-
     @Inject
-    private TrackDAO trackDAO;
+    private ITrackDAO trackDAO;
 
-    public List<TrackDTO> getTracks(String token) {
-        if (!HARDCODED_TOKEN.equals(token)) {
-            return null;
-        }
-        return trackDAO.getTracks();
+    public List<TrackDTO> getAllTracks() {
+        return trackDAO.getAllTracks();
+    }
+
+    public TrackDTO getTrackById(int id) {
+        return trackDAO.getTrackById(id);
+    }
+
+    public void addTrack(TrackDTO track) {
+        trackDAO.insertTrack(track);
+    }
+
+    public void updateTrack(TrackDTO track) {
+        trackDAO.updateTrack(track);
+    }
+
+    public void deleteTrack(int id) {
+        trackDAO.deleteTrack(id);
     }
 }
