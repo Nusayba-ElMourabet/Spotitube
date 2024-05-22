@@ -1,11 +1,11 @@
 package nl.nusayba.oose.domain.interfaces;
 
+import nl.nusayba.oose.domain.dto.LoginDTO;
 import nl.nusayba.oose.domain.dto.UserDTO;
 
 public interface ILoginDAO {
-    UserDTO getUserByUsername(String username);
+    LoginDTO getUserAndToken(LoginDTO request);
     UserDTO getUserByToken(String token);
-    void insertUser(UserDTO user);
-    void updateUser(UserDTO user);
-    void deleteUser(int id);
+
+    UserDTO getUserAndToken(String user);
 }

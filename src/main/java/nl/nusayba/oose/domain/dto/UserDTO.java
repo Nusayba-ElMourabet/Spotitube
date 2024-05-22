@@ -5,9 +5,6 @@ import java.awt.*;
 public class UserDTO {
     private String user;
     private String token;
-    private String password;
-
-    // Getters and setters
 
     public String getUser() {
         return user;
@@ -23,13 +20,5 @@ public class UserDTO {
 
     public void setToken(String token) {
         this.token = token;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 }

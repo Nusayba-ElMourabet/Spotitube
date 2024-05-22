@@ -7,6 +7,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import nl.nusayba.oose.domain.dto.LoginDTO;
 import nl.nusayba.oose.domain.dto.UserDTO;
 import nl.nusayba.oose.domain.exceptions.AuthenticationException;
 import nl.nusayba.oose.domain.services.LoginService;
@@ -20,21 +21,8 @@ public class LoginResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response login(UserDTO loginRequest) {
-        try {
-            UserDTO user = loginService.authenticate(loginRequest);
-            return Response.ok(user).build();
-        } catch (AuthenticationException e) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
-        }
-    }
-
-    @POST
-    @Path("/register")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response register(UserDTO user) {
-        loginService.addUser(user);
-        return Response.status(Response.Status.CREATED).build();
+    public UserDTO login(LoginDTO request) {
+        return loginService.authenticate(request);
     }
 }
 

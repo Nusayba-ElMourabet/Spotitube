@@ -2,6 +2,7 @@ package nl.nusayba.oose.datasource;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import nl.nusayba.oose.domain.dto.LoginDTO;
 import nl.nusayba.oose.domain.dto.UserDTO;
 import nl.nusayba.oose.domain.interfaces.ILoginDAO;
 import nl.nusayba.oose.util.DatabaseProperties;
@@ -27,23 +28,25 @@ public class LoginDAO implements ILoginDAO {
     }
 
     @Override
-    public UserDTO getUserByUsername(String username) {
-        UserDTO user = null;
-        try (Connection connection = DriverManager.getConnection(url, this.username, this.password);
-             PreparedStatement statement = connection.prepareStatement("SELECT * FROM Users WHERE username = ?")) {
-            statement.setString(1, username);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    user = new UserDTO();
-                    user.setUser(resultSet.getString("username"));
-                    user.setPassword(resultSet.getString("password"));
-                    user.setToken(resultSet.getString("token"));
+    public LoginDTO getUserAndToken(LoginDTO request) {
+        LoginDTO l = new LoginDTO();
+        try {
+            Connection connection = DriverManager.getConnection(dbProperties.connectionString());
+            PreparedStatement statement = connection.prepareStatement("SELECT * FROM Users WHERE username = ? AND password = ?");
+            statement.setString(1, request.getUser());
+            statement.setString(2, request.getPassword());
+                ResultSet resultset = statement.executeQuery();
+
+                while (resultset.next()) {
+                    l.setUser(resultset.getString("username"));
+                    l.setPassword(resultset.getString("password"));
                 }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+                statement.close();
+                connection.close();
+            } catch (SQLException e) {
+            System.out.println(e.getMessage());
         }
-        return user;
+        return l;
     }
 
     @Override
@@ -60,23 +63,9 @@ public class LoginDAO implements ILoginDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
         return user;
-    }
-
-    @Override
-    public void insertUser(UserDTO user) {
-        String token = generateToken(user.getUser());
-        try (Connection connection = DriverManager.getConnection(url, this.username, this.password);
-             PreparedStatement statement = connection.prepareStatement("INSERT INTO Users (username, password, token) VALUES (?, ?, ?)")) {
-            statement.setString(1, user.getUser());
-            statement.setString(2, user.getPassword());
-            statement.setString(3, token);
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     private String generateToken(String username) {
@@ -84,27 +73,24 @@ public class LoginDAO implements ILoginDAO {
     }
 
     @Override
-    public void updateUser(UserDTO user) {
-        try (Connection connection = DriverManager.getConnection(url, this.username, this.password);
-             PreparedStatement statement = connection.prepareStatement("UPDATE Users SET username = ?, password = ?, token = ? WHERE username = ?")) {
-            statement.setString(1, user.getUser());
-            statement.setString(2, user.getPassword());
-            statement.setString(3, user.getToken());
-            statement.setString(4, user.getUser());
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
+    public UserDTO getUserAndToken(String user) {
+        UserDTO u = new UserDTO();
+        try {
+            Connection connection = DriverManager.getConnection(dbProperties.connectionString());
+            PreparedStatement statement = connection.prepareStatement("SELECT fullname, token from Users where username = ?");
+            statement.setString(1, user);
+            ResultSet resultSet = statement.executeQuery();
 
-    @Override
-    public void deleteUser(int id) {
-        try (Connection connection = DriverManager.getConnection(url, this.username, this.password);
-             PreparedStatement statement = connection.prepareStatement("DELETE FROM Users WHERE id = ?")) {
-            statement.setInt(1, id);
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            while(resultSet.next()){
+                u.setUser(resultSet.getString("fullname"));
+                u.setToken(resultSet.getString("token"));
+            }
+            statement.close();
+            connection.close();
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
         }
+        System.out.println(u.getToken() +  u.getUser());
+        return u;
     }
 }
