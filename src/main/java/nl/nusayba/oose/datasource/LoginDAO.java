@@ -13,25 +13,27 @@ import java.sql.*;
 public class LoginDAO implements ILoginDAO {
 
 
-    @Inject
-    private DatabaseProperties dbProperties;
-
     private String url;
     private String username;
     private String password;
+    private DatabaseProperties databaseProperties;
 
+//    @Inject
+//    public void init() {
+//        this.url = dbProperties.getUrl();
+//        this.username = dbProperties.getUsername();
+//        this.password = dbProperties.getPassword();
+//    }
     @Inject
-    public void init() {
-        this.url = dbProperties.getUrl();
-        this.username = dbProperties.getUsername();
-        this.password = dbProperties.getPassword();
+    public void setDatabaseProperties(DatabaseProperties databaseProperties) {
+        this.databaseProperties = databaseProperties;
     }
 
     @Override
     public LoginDTO getUserAndToken(LoginDTO request) {
         LoginDTO l = new LoginDTO();
         try {
-            Connection connection = DriverManager.getConnection(dbProperties.connectionString());
+            Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
             PreparedStatement statement = connection.prepareStatement("SELECT * FROM Users WHERE username = ? AND password = ?");
             statement.setString(1, request.getUser());
             statement.setString(2, request.getPassword());
@@ -52,7 +54,7 @@ public class LoginDAO implements ILoginDAO {
     @Override
     public UserDTO getUserByToken(String token) {
         UserDTO user = null;
-        try (Connection connection = DriverManager.getConnection(url, this.username, this.password);
+        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
              PreparedStatement statement = connection.prepareStatement("SELECT * FROM Users WHERE token = ?")) {
             statement.setString(1, token);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -76,7 +78,7 @@ public class LoginDAO implements ILoginDAO {
     public UserDTO getUserAndToken(String user) {
         UserDTO u = new UserDTO();
         try {
-            Connection connection = DriverManager.getConnection(dbProperties.connectionString());
+            Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
             PreparedStatement statement = connection.prepareStatement("SELECT fullname, token from Users where username = ?");
             statement.setString(1, user);
             ResultSet resultSet = statement.executeQuery();

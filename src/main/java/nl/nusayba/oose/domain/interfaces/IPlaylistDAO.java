@@ -1,13 +1,16 @@
 package nl.nusayba.oose.domain.interfaces;
 
 import  nl.nusayba.oose.domain.dto.PlaylistDTO;
+import nl.nusayba.oose.domain.dto.PlaylistsDTO;
 
-import java.util.List;
+
 
 public interface IPlaylistDAO {
-    List<PlaylistDTO> getAllPlaylists();
-    PlaylistDTO getPlaylistById(int id);
-    void insertPlaylist(PlaylistDTO playlist);
-    void updatePlaylist(PlaylistDTO playlist);
+    PlaylistsDTO getPlaylist(String username);
+    void addPlaylist(String username, PlaylistDTO playlistDTO);
     void deletePlaylist(int id);
+    void updatePlaylist(int id, PlaylistDTO playlistDTO);
+    int calculateTotalDuration();
+
+    PlaylistDTO getPlaylistById(int id);
 }
