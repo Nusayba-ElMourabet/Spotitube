@@ -10,9 +10,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import nl.nusayba.oose.domain.services.TrackService;
 
-import javax.sound.midi.Track;
-import java.util.List;
-
 
 @Path("/playlists")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -61,13 +58,14 @@ public class PlaylistResource {
 
     @DELETE
     @Path("/{id}")
-    public Response deletePlaylist(@PathParam("id") int id, @QueryParam("token") String token) {
-        try {
-            PlaylistsDTO playlists = playlistService.deletePlaylist(token, id);
-            return Response.ok(playlists).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid token").build();
-        }
+    public PlaylistsDTO deletePlaylist(@PathParam("id") int id, @QueryParam("token") String token) {
+            return playlistService.deletePlaylist(token, id);
+    }
+
+    @PUT
+    @Path("/{id}")
+    public PlaylistsDTO updatePlaylist(@QueryParam("token") String token, @PathParam("id") int id, PlaylistDTO playlistDTO){
+        return playlistService.updatePlaylist(token, id, playlistDTO);
     }
 
     @GET

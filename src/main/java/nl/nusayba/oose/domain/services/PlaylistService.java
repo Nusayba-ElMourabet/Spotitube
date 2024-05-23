@@ -53,32 +53,25 @@ public class PlaylistService {
         throw new RuntimeException("Invalid token");
     }
 
+
     public PlaylistsDTO deletePlaylist(String token, int id) {
         if (isValidToken(token)) {
             String username = loginDAO.getUserByToken(token).getUser();
-            PlaylistDTO playlist = playlistDAO.getPlaylistById(id);
-            if (playlist.isOwner() && username.equals(playlist.getName())) {
                 playlistDAO.deletePlaylist(id);
                 return playlistDAO.getPlaylist(username);
             } else {
                 throw new RuntimeException("You do not have permission to delete this playlist");
             }
         }
-        throw new RuntimeException("Invalid token");
-    }
 
     public PlaylistsDTO updatePlaylist(String token, int id, PlaylistDTO playlistDTO) {
         if (isValidToken(token)) {
             String username = loginDAO.getUserByToken(token).getUser();
-            PlaylistDTO existingPlaylist = playlistDAO.getPlaylistById(id);
-            if (existingPlaylist.isOwner() && username.equals(existingPlaylist.getName())) {
                 playlistDAO.updatePlaylist(id, playlistDTO);
                 return playlistDAO.getPlaylist(username);
             } else {
-                throw new RuntimeException("You do not have permission to update this playlist");
-            }
+            throw new RuntimeException("You do not have permission to update this playlist");
         }
-        throw new RuntimeException("Invalid token");
     }
 
     public TracksDTO getAllTracksInPlaylist(int playlistId, String token) {
