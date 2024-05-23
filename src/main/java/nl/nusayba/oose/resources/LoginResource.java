@@ -12,6 +12,8 @@ import nl.nusayba.oose.domain.dto.UserDTO;
 import nl.nusayba.oose.domain.exceptions.AuthenticationException;
 import nl.nusayba.oose.domain.services.LoginService;
 
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 @Path("/login")
 public class LoginResource {
 
@@ -19,8 +21,6 @@ public class LoginResource {
     private LoginService loginService;
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public UserDTO login(LoginDTO request) {
         return loginService.authenticate(request);
     }

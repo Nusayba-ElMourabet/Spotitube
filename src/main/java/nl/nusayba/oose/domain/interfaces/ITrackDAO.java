@@ -1,13 +1,18 @@
 package nl.nusayba.oose.domain.interfaces;
 
 import nl.nusayba.oose.domain.dto.TrackDTO;
-
-import java.util.List;
+import nl.nusayba.oose.domain.dto.TracksDTO;
 
 public interface ITrackDAO {
-    List<TrackDTO> getAllTracks();
-    TrackDTO getTrackById(int id);
-    void insertTrack(TrackDTO track);
-    void updateTrack(TrackDTO track);
+    TracksDTO getAllTracksinPlaylist(int playlistId);
+
+    TracksDTO getAllTracks();
+
+    void addTrack(TrackDTO trackDTO);
+
     void deleteTrack(int id);
+
+    void updateTrack(int id, TrackDTO trackDTO);
+
+    TrackDTO getTrackById(int id);
 }

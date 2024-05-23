@@ -2,16 +2,20 @@ package nl.nusayba.oose.domain.services;
 
 import nl.nusayba.oose.domain.dto.PlaylistDTO;
 import nl.nusayba.oose.domain.dto.PlaylistsDTO;
+import nl.nusayba.oose.domain.dto.TracksDTO;
+import nl.nusayba.oose.domain.exceptions.AuthenticationException;
 import nl.nusayba.oose.domain.interfaces.IPlaylistDAO;
 import nl.nusayba.oose.domain.interfaces.ILoginDAO;
 
 import jakarta.inject.Inject;
 import jakarta.enterprise.context.RequestScoped;
+import nl.nusayba.oose.domain.interfaces.ITrackDAO;
 
 @RequestScoped
 public class PlaylistService {
 
     private IPlaylistDAO playlistDAO;
+    private ITrackDAO trackDAO;
     private ILoginDAO loginDAO;
 
     @Inject
@@ -23,15 +27,21 @@ public class PlaylistService {
     public void setLoginDAO(ILoginDAO loginDAO) {
         this.loginDAO = loginDAO;
     }
+
+    @Inject
+    public void setTrackDAO(ITrackDAO trackDAO){this.trackDAO = trackDAO;}
+
+
     public PlaylistDTO getPlaylistById(int id) {
         return playlistDAO.getPlaylistById(id);
     }
+    
     public PlaylistsDTO getAllPlaylists(String token) {
         if (isValidToken(token)) {
             String username = loginDAO.getUserByToken(token).getUser();
             return playlistDAO.getPlaylist(username);
         }
-        throw new RuntimeException("Invalid token");
+        throw new AuthenticationException();
     }
 
     public PlaylistsDTO addPlaylist(String token, PlaylistDTO playlistDTO) {
@@ -69,6 +79,13 @@ public class PlaylistService {
             }
         }
         throw new RuntimeException("Invalid token");
+    }
+
+    public TracksDTO getAllTracksInPlaylist(int playlistId, String token) {
+        if (isValidToken(token)) {
+            return trackDAO.getAllTracksinPlaylist(playlistId);
+        }
+        throw new AuthenticationException();
     }
 
     private boolean isValidToken(String token) {

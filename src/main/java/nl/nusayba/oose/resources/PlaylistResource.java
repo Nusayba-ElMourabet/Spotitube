@@ -4,10 +4,13 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import nl.nusayba.oose.domain.dto.PlaylistDTO;
 import nl.nusayba.oose.domain.dto.PlaylistsDTO;
+import nl.nusayba.oose.domain.dto.TracksDTO;
 import nl.nusayba.oose.domain.services.PlaylistService;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import nl.nusayba.oose.domain.services.TrackService;
 
+import javax.sound.midi.Track;
 import java.util.List;
 
 
@@ -17,26 +20,26 @@ import java.util.List;
 public class PlaylistResource {
 
     private PlaylistService playlistService;
+    private TrackService trackService;
 
     @Inject
     public void setPlaylistService(PlaylistService playlistService) {
         this.playlistService = playlistService;
     }
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getAllPlaylists(@QueryParam("token") String token) {
-        try {
-            PlaylistsDTO playlists = playlistService.getAllPlaylists(token);
-            return Response.ok(playlists).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid token").build();
-        }
+    @Inject
+    public void setTrackService(TrackService trackService){
+        this.trackService = trackService;
     }
 
     @GET
+    public PlaylistsDTO getAllPlaylists(@QueryParam("token") String token) {
+            return playlistService.getAllPlaylists(token);
+    }
+
+    // Deze moeten geen Response meer terug geven maar dit later fixen..
+    @GET
     @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response getPlaylistById(@PathParam("id") int id) {
         PlaylistDTO playlist = playlistService.getPlaylistById(id);
         if (playlist != null) {
@@ -47,8 +50,6 @@ public class PlaylistResource {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response addPlaylist(@QueryParam("token") String token, PlaylistDTO playlistDTO) {
         try {
             PlaylistsDTO playlists = playlistService.addPlaylist(token, playlistDTO);
@@ -60,7 +61,6 @@ public class PlaylistResource {
 
     @DELETE
     @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response deletePlaylist(@PathParam("id") int id, @QueryParam("token") String token) {
         try {
             PlaylistsDTO playlists = playlistService.deletePlaylist(token, id);
@@ -69,7 +69,14 @@ public class PlaylistResource {
             return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid token").build();
         }
     }
+
+    @GET
+    @Path("/{id}/tracks")
+    public TracksDTO getTracksInPlaylist(@PathParam("id") int id, @QueryParam("token") String token){
+        return playlistService.getAllTracksInPlaylist(id, token);
+    }
 }
+
 //@Path("/playlist")
 //public class PlaylistResource {
 //    //geen field injection gebruiken

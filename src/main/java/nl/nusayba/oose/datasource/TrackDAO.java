@@ -1,38 +1,36 @@
 package nl.nusayba.oose.datasource;
 
-
-import jakarta.enterprise.context.ApplicationScoped;
+import nl.nusayba.oose.domain.dto.LoginDTO;
 import nl.nusayba.oose.domain.dto.TrackDTO;
+import nl.nusayba.oose.domain.dto.TracksDTO;
 import nl.nusayba.oose.domain.interfaces.ITrackDAO;
-import jakarta.inject.Inject;
 import nl.nusayba.oose.util.DatabaseProperties;
-import java.util.ArrayList;
-import java.util.List;
+
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import java.sql.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 public class TrackDAO implements ITrackDAO {
+    private Logger logger = Logger.getLogger(getClass().getName());
+
+    private DatabaseProperties databaseProperties;
 
     @Inject
-    private DatabaseProperties dbProperties;
-
-    private String url;
-    private String username;
-    private String password;
-
-    @Inject
-    public void init() {
-        this.url = dbProperties.getUrl();
-        this.username = dbProperties.getUsername();
-        this.password = dbProperties.getPassword();
+    public void setDatabaseProperties(DatabaseProperties databaseProperties) {
+        this.databaseProperties = databaseProperties;
     }
 
     @Override
-    public List<TrackDTO> getAllTracks() {
-        List<TrackDTO> tracks = new ArrayList<>();
-        try (Connection connection = DriverManager.getConnection(url, username, password);
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT * FROM Tracks")) {
+    public TracksDTO getAllTracksinPlaylist(int playlistId) {
+        TracksDTO tracks = new TracksDTO();
+        try {
+            Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
+            PreparedStatement statement = connection.prepareStatement("SELECT * FROM Tracks t join PlaylistTracks p on t.id = p.track_id where p.playlist_id = ?");
+            statement.setInt(1, playlistId);
+            ResultSet resultSet = statement.executeQuery();
 
             while (resultSet.next()) {
                 TrackDTO track = new TrackDTO();
@@ -45,85 +43,141 @@ public class TrackDAO implements ITrackDAO {
                 track.setPublicationDate(resultSet.getString("publication_date"));
                 track.setDescription(resultSet.getString("description"));
                 track.setOfflineAvailable(resultSet.getBoolean("offline_available"));
-                tracks.add(track);
+                tracks.addTrack(track);
             }
+            tracks.setLength(calculateTotalDuration());
+
+            statement.close();
+            connection.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
         return tracks;
     }
 
     @Override
-    public TrackDTO getTrackById(int id) {
-        TrackDTO track = null;
-        try (Connection connection = DriverManager.getConnection(url, username, password);
-             PreparedStatement statement = connection.prepareStatement("SELECT * FROM Tracks WHERE id = ?")) {
-            statement.setInt(1, id);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    track = new TrackDTO();
-                    track.setId(resultSet.getInt("id"));
-                    track.setTitle(resultSet.getString("title"));
-                    track.setPerformer(resultSet.getString("performer"));
-                    track.setDuration(resultSet.getInt("duration"));
-                    track.setAlbum(resultSet.getString("album"));
-                    track.setPlaycount(resultSet.getInt("playcount"));
-                    track.setPublicationDate(resultSet.getString("publication_date"));
-                    track.setDescription(resultSet.getString("description"));
-                    track.setOfflineAvailable(resultSet.getBoolean("offline_available"));
-                }
+    public TracksDTO getAllTracks() {
+        TracksDTO tracksDTO = new TracksDTO();
+        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM Tracks");
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                TrackDTO track = new TrackDTO();
+                track.setId(resultSet.getInt("id"));
+                track.setTitle(resultSet.getString("title"));
+                track.setPerformer(resultSet.getString("performer"));
+                track.setDuration(resultSet.getInt("duration"));
+                track.setAlbum(resultSet.getString("album"));
+                track.setPlaycount(resultSet.getInt("playcount"));
+                track.setPublicationDate(resultSet.getString("publication_date"));
+                track.setDescription(resultSet.getString("description"));
+                track.setOfflineAvailable(resultSet.getBoolean("offline_available"));
+                tracksDTO.addTrack(track);
             }
+            tracksDTO.setLength(calculateTotalDuration());
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
         }
-        return track;
+        return tracksDTO;
     }
 
     @Override
-    public void insertTrack(TrackDTO track) {
-        try (Connection connection = DriverManager.getConnection(url, username, password);
-             PreparedStatement statement = connection.prepareStatement("INSERT INTO Tracks (title, performer, duration, album, playcount, publication_date, description, offline_available) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
-            statement.setString(1, track.getTitle());
-            statement.setString(2, track.getPerformer());
-            statement.setInt(3, track.getDuration());
-            statement.setString(4, track.getAlbum());
-            statement.setInt(5, track.getPlaycount());
-            statement.setDate(6, Date.valueOf(track.getPublicationDate()));
-            statement.setString(7, track.getDescription());
-            statement.setBoolean(8, track.isOfflineAvailable());
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
+    public void addTrack(TrackDTO trackDTO) {
+        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
+             PreparedStatement statement = connection.prepareStatement("INSERT INTO tracks (title, performer, duration, album, playcount, publication_date, description, offline_available) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
 
-    @Override
-    public void updateTrack(TrackDTO track) {
-        try (Connection connection = DriverManager.getConnection(url, username, password);
-             PreparedStatement statement = connection.prepareStatement("UPDATE Tracks SET title = ?, performer = ?, duration = ?, album = ?, playcount = ?, publication_date = ?, description = ?, offline_available = ? WHERE id = ?")) {
-            statement.setString(1, track.getTitle());
-            statement.setString(2, track.getPerformer());
-            statement.setInt(3, track.getDuration());
-            statement.setString(4, track.getAlbum());
-            statement.setInt(5, track.getPlaycount());
-            statement.setDate(6, Date.valueOf(track.getPublicationDate()));
-            statement.setString(7, track.getDescription());
-            statement.setBoolean(8, track.isOfflineAvailable());
-            statement.setInt(9, track.getId());
+            statement.setString(1, trackDTO.getTitle());
+            statement.setString(2, trackDTO.getPerformer());
+            statement.setInt(3, trackDTO.getDuration());
+            statement.setString(4, trackDTO.getAlbum());
+            statement.setInt(5, trackDTO.getPlaycount());
+            statement.setString(6, trackDTO.getPublicationDate());
+            statement.setString(7, trackDTO.getDescription());
+            statement.setBoolean(8, trackDTO.isOfflineAvailable());
             statement.executeUpdate();
+            connection.commit();
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
         }
     }
 
     @Override
     public void deleteTrack(int id) {
-        try (Connection connection = DriverManager.getConnection(url, username, password);
-             PreparedStatement statement = connection.prepareStatement("DELETE FROM Tracks WHERE id = ?")) {
+        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
+             PreparedStatement statement = connection.prepareStatement("DELETE FROM tracks WHERE id = ?")) {
+
             statement.setInt(1, id);
             statement.executeUpdate();
+            connection.commit();
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
         }
+    }
+
+    @Override
+    public void updateTrack(int id, TrackDTO trackDTO) {
+        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
+             PreparedStatement statement = connection.prepareStatement("UPDATE tracks SET title = ?, performer = ?, duration = ?, album = ?, playcount = ?, publication_date = ?, description = ?, offline_available = ? WHERE id = ?")) {
+
+            statement.setString(1, trackDTO.getTitle());
+            statement.setString(2, trackDTO.getPerformer());
+            statement.setInt(3, trackDTO.getDuration());
+            statement.setString(4, trackDTO.getAlbum());
+            statement.setInt(5, trackDTO.getPlaycount());
+            statement.setString(6, trackDTO.getPublicationDate());
+            statement.setString(7, trackDTO.getDescription());
+            statement.setBoolean(8, trackDTO.isOfflineAvailable());
+            statement.setInt(9, id);
+            statement.executeUpdate();
+            connection.commit();
+
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        }
+    }
+
+    @Override
+    public TrackDTO getTrackById(int id) {
+        TrackDTO trackDTO = new TrackDTO();
+        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM tracks WHERE id = ?")) {
+
+            statement.setInt(1, id);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                trackDTO.setId(resultSet.getInt("id"));
+                trackDTO.setTitle(resultSet.getString("title"));
+                trackDTO.setPerformer(resultSet.getString("performer"));
+                trackDTO.setDuration(resultSet.getInt("duration"));
+                trackDTO.setAlbum(resultSet.getString("album"));
+                trackDTO.setPlaycount(resultSet.getInt("playcount"));
+                trackDTO.setPublicationDate(resultSet.getString("publication_date"));
+                trackDTO.setDescription(resultSet.getString("description"));
+                trackDTO.setOfflineAvailable(resultSet.getBoolean("offline_available"));
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        }
+        return trackDTO;
+    }
+
+    private int calculateTotalDuration() {
+        int totalDuration = 0;
+        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
+             PreparedStatement statement = connection.prepareStatement("SELECT SUM(duration) AS length FROM tracks");
+             ResultSet resultSet = statement.executeQuery()) {
+
+            if (resultSet.next()) {
+                totalDuration = resultSet.getInt("length");
+            }
+
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        }
+        return totalDuration;
     }
 }
