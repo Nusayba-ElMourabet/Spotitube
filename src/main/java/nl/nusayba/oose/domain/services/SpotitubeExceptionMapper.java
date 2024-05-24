@@ -13,7 +13,7 @@ public class SpotitubeExceptionMapper implements ExceptionMapper<SpotitubeExcept
     public Response toResponse(SpotitubeException e) {
         if (e instanceof AuthenticationException){
             return Response.status(401).build();
-        } 
+        }
         return Response.status(500).build();
     }
 }
