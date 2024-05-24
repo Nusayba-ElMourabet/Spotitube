@@ -99,6 +99,18 @@ public class PlaylistDAO implements IPlaylistDAO {
             logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
         }
     }
+    public void addTrackToPlaylist(int playlistId, int trackId) {
+        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
+             PreparedStatement statement = connection.prepareStatement(
+                     "INSERT INTO PlaylistTracks (playlist_id, track_id) VALUES (?, ?)")) {
+            statement.setInt(1, playlistId);
+            statement.setInt(2, trackId);
+            statement.executeUpdate();
+            connection.commit();
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        }
+    }
 
     @Override
     public void deletePlaylist(int id) {

@@ -4,11 +4,11 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import nl.nusayba.oose.domain.dto.PlaylistDTO;
 import nl.nusayba.oose.domain.dto.PlaylistsDTO;
+import nl.nusayba.oose.domain.dto.TrackDTO;
 import nl.nusayba.oose.domain.dto.TracksDTO;
 import nl.nusayba.oose.domain.services.PlaylistService;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import nl.nusayba.oose.domain.services.TrackService;
 
 
 @Path("/playlists")
@@ -17,17 +17,13 @@ import nl.nusayba.oose.domain.services.TrackService;
 public class PlaylistResource {
 
     private PlaylistService playlistService;
-    private TrackService trackService;
 
     @Inject
     public void setPlaylistService(PlaylistService playlistService) {
         this.playlistService = playlistService;
     }
 
-    @Inject
-    public void setTrackService(TrackService trackService){
-        this.trackService = trackService;
-    }
+
 
     @GET
     public PlaylistsDTO getAllPlaylists(@QueryParam("token") String token) {
@@ -72,6 +68,18 @@ public class PlaylistResource {
     @Path("/{id}/tracks")
     public TracksDTO getTracksInPlaylist(@PathParam("id") int id, @QueryParam("token") String token){
         return playlistService.getAllTracksInPlaylist(id, token);
+    }
+
+    @POST
+    @Path("/{id}/tracks")
+    public TracksDTO addTrackToPlaylist(@QueryParam("token") String token, @PathParam("id") int id, TrackDTO trackDTO){
+        return playlistService.addTrackToPlaylist(token, id, trackDTO);
+    }
+
+    @DELETE
+    @Path("/{id}/tracks/{trackId}")
+    public TracksDTO deleteTrackFromPlaylist(@QueryParam("token") String token, @PathParam("id") int id, @PathParam("trackId") int trackId){
+        return playlistService.deleteTrackFromPlaylist(token, id, trackId);
     }
 }
 

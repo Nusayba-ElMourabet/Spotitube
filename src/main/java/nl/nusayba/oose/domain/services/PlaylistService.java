@@ -2,6 +2,7 @@ package nl.nusayba.oose.domain.services;
 
 import nl.nusayba.oose.domain.dto.PlaylistDTO;
 import nl.nusayba.oose.domain.dto.PlaylistsDTO;
+import nl.nusayba.oose.domain.dto.TrackDTO;
 import nl.nusayba.oose.domain.dto.TracksDTO;
 import nl.nusayba.oose.domain.exceptions.AuthenticationException;
 import nl.nusayba.oose.domain.interfaces.IPlaylistDAO;
@@ -10,6 +11,8 @@ import nl.nusayba.oose.domain.interfaces.ILoginDAO;
 import jakarta.inject.Inject;
 import jakarta.enterprise.context.RequestScoped;
 import nl.nusayba.oose.domain.interfaces.ITrackDAO;
+
+import java.util.List;
 
 @RequestScoped
 public class PlaylistService {
@@ -81,7 +84,30 @@ public class PlaylistService {
         throw new AuthenticationException();
     }
 
+    public TracksDTO getTracksNotInPlaylist(int playlistId, String token) {
+        if (isValidToken(token)) {
+            return trackDAO.getTracksNotInPlaylist(playlistId);
+        }
+        throw new AuthenticationException();
+    }
+
     private boolean isValidToken(String token) {
         return loginDAO.getUserByToken(token) != null;
+    }
+
+    public TracksDTO addTrackToPlaylist(String token, int id, TrackDTO trackDTO) {
+        if (isValidToken(token)) {
+            trackDAO.addTrackToPlaylist(id, trackDTO);
+            return trackDAO.getAllTracksinPlaylist(id);
+        }
+        throw new AuthenticationException();
+    }
+
+    public TracksDTO deleteTrackFromPlaylist(String token, int id, int trackId) {
+        if (isValidToken(token)) {
+            trackDAO.deleteTrackFromPlaylist(id, trackId);
+            return trackDAO.getAllTracksinPlaylist(id);
+        }
+        throw new AuthenticationException();
     }
 }

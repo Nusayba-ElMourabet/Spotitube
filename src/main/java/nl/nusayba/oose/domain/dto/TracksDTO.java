@@ -7,6 +7,13 @@ public class TracksDTO {
     private List<TrackDTO> tracks = new ArrayList<>();
     private int length;
 
+    public TracksDTO(List<TrackDTO> t) {
+        this.tracks = t;
+    }
+
+    public TracksDTO (){
+    }
+
     // Getters and Setters
     public List<TrackDTO> getTracks() {
         return tracks;

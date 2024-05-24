@@ -8,7 +8,11 @@ import nl.nusayba.oose.util.DatabaseProperties;
 
 import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
+
+import javax.sound.midi.Track;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -165,6 +169,33 @@ public class TrackDAO implements ITrackDAO {
         return trackDTO;
     }
 
+    @Override
+    public TracksDTO getTracksNotInPlaylist(int playlistId) {
+        List<TrackDTO> t = new ArrayList<>();
+        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT * FROM tracks t WHERE t.id NOT IN (SELECT pt.track_id FROM PlaylistTracks pt WHERE pt.playlist_id = ?)")) {
+            statement.setInt(1, playlistId);
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                TrackDTO track = new TrackDTO();
+                track.setId(resultSet.getInt("id"));
+                track.setTitle(resultSet.getString("title"));
+                track.setPerformer(resultSet.getString("performer"));
+                track.setDuration(resultSet.getInt("duration"));
+                track.setAlbum(resultSet.getString("album"));
+                track.setPlaycount(resultSet.getInt("playcount"));
+                track.setPublicationDate(resultSet.getString("publication_date"));
+                track.setDescription(resultSet.getString("description"));
+                track.setOfflineAvailable(resultSet.getBoolean("offline_available"));
+                t.add(track);
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        }
+        return new TracksDTO(t);
+    }
+
     private int calculateTotalDuration() {
         int totalDuration = 0;
         try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
@@ -179,5 +210,43 @@ public class TrackDAO implements ITrackDAO {
             logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
         }
         return totalDuration;
+    }
+
+    @Override
+    public void addTrackToPlaylist(int id, TrackDTO trackDTO){
+        try {
+
+            System.out.println("Adding track to playlist");
+            Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
+            PreparedStatement statement = connection.prepareStatement("INSERT INTO PlaylistTracks (playlist_id, track_id) VALUES (?, ?)");
+            statement.setInt(1, id);
+            statement.setInt(2, trackDTO.getId());
+
+            statement.executeUpdate();
+            connection.commit();
+            statement.close();
+            connection.close();
+
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        }
+    }
+
+    @Override
+    public void deleteTrackFromPlaylist(int id, int trackId) {
+        try {
+            Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
+            PreparedStatement statement = connection.prepareStatement("DELETE FROM PlaylistTracks WHERE playlist_id = ? AND track_id = ?");
+            statement.setInt(1, id);
+            statement.setInt(2, trackId);
+
+            statement.executeUpdate();
+            connection.commit();
+            statement.close();
+            connection.close();
+
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        }
     }
 }
