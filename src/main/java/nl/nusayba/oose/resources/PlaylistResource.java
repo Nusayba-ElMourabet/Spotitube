@@ -30,28 +30,10 @@ public class PlaylistResource {
             return playlistService.getAllPlaylists(token);
     }
 
-    // Deze moeten geen Response meer terug geven maar dit later fixen..
-    @GET
-    @Path("/{id}")
-    public Response getPlaylistById(@PathParam("id") int id) {
-        PlaylistDTO playlist = playlistService.getPlaylistById(id);
-        if (playlist != null) {
-            return Response.ok(playlist).build();
-        } else {
-            return Response.status(Response.Status.NOT_FOUND).entity("Playlist not found").build();
-        }
-    }
-
     @POST
-    public Response addPlaylist(@QueryParam("token") String token, PlaylistDTO playlistDTO) {
-        try {
-            PlaylistsDTO playlists = playlistService.addPlaylist(token, playlistDTO);
-            return Response.ok(playlists).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Invalid token").build();
-        }
+    public PlaylistsDTO addPlaylist(@QueryParam("token") String token, PlaylistDTO playlistDTO){
+        return playlistService.addPlaylist(token, playlistDTO);
     }
-
     @DELETE
     @Path("/{id}")
     public PlaylistsDTO deletePlaylist(@PathParam("id") int id, @QueryParam("token") String token) {
@@ -82,9 +64,3 @@ public class PlaylistResource {
         return playlistService.deleteTrackFromPlaylist(token, id, trackId);
     }
 }
-
-//@Path("/playlist")
-//public class PlaylistResource {
-//    //geen field injection gebruiken
-//
-//}

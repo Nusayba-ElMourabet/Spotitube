@@ -17,16 +17,15 @@ import nl.nusayba.oose.domain.services.LoginService;
 @Path("/login")
 public class LoginResource {
 
-    @Inject
     private LoginService loginService;
-
+    @Inject
+    public void setLoginService(LoginService loginService) {
+        this.loginService = loginService;
+    }
     @POST
     public UserDTO login(LoginDTO request) {
         return loginService.authenticate(request);
     }
 
-    public void setLoginService(LoginService loginService) {
-        this.loginService = loginService;
-    }
 }
 

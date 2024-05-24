@@ -11,8 +11,11 @@ import nl.nusayba.oose.domain.interfaces.ILoginDAO;
 @ApplicationScoped
 public class LoginService {
 
-    @Inject
     private ILoginDAO loginDAO;
+    @Inject
+    void setLoginDAO(ILoginDAO loginDAO){
+        this.loginDAO = loginDAO;
+    }
 
     public UserDTO authenticate(LoginDTO request) {
             LoginDTO received = loginDAO.getUserAndToken(request);
