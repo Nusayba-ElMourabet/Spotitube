@@ -24,9 +24,5 @@ public class LoginResource {
     public UserDTO login(LoginDTO request) {
         return loginService.authenticate(request);
     }
-
-    public void setLoginService(LoginService loginService) {
-        this.loginService = loginService;
-    }
 }
 
