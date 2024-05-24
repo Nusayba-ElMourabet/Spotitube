@@ -8,6 +8,13 @@ public class PlaylistsDTO {
     private List<PlaylistDTO> playlists = new ArrayList<>();
     private int length;
 
+    public PlaylistsDTO(List<PlaylistDTO> playlists, int length) {
+        this.playlists = playlists;
+        this.length = length;
+    }
+    public PlaylistsDTO() {
+        //default
+    }
     public int getLength() {
         return length;
     }
@@ -32,4 +39,8 @@ public class PlaylistsDTO {
         }
         return null;
     }
+    public void setPlaylists(List<PlaylistDTO> playlists) {
+        this.playlists = playlists;
+    }
+
 }

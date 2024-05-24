@@ -13,7 +13,8 @@ CREATE TABLE Users (
     id INT IDENTITY NOT NULL PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    token VARCHAR(255) UNIQUE NOT NULL
+    token VARCHAR(255) UNIQUE NOT NULL,
+    fullname VARCHAR(255) UNIQUE NOT NULL
 );
 
 CREATE TABLE Playlists (
@@ -44,7 +45,9 @@ CREATE TABLE PlaylistTracks (
 );
 
 -- Insert Users
-INSERT INTO Users (username, password, token) VALUES ('user', 'password', 'dummy-token');
+INSERT INTO Users (username, password, token, fullname) VALUES ('user', 'password', 'dummy-token', 'userfullname');
+INSERT INTO Users (username, password, token, fullname) VALUES ('user', 'password', 'dummy-token', 'Nusayba');
+
 
 -- Insert Playlists
 INSERT INTO Playlists (name, owner_id) VALUES ('Heavy Metal', 1);

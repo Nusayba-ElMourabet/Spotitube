@@ -34,11 +34,6 @@ public class PlaylistService {
     @Inject
     public void setTrackDAO(ITrackDAO trackDAO){this.trackDAO = trackDAO;}
 
-
-    public PlaylistDTO getPlaylistById(int id) {
-        return playlistDAO.getPlaylistById(id);
-    }
-    
     public PlaylistsDTO getAllPlaylists(String token) {
         if (isValidToken(token)) {
             String username = loginDAO.getUserByToken(token).getUser();
@@ -53,31 +48,31 @@ public class PlaylistService {
             playlistDAO.addPlaylist(username, playlistDTO);
             return playlistDAO.getPlaylist(username);
         }
-        throw new RuntimeException("Invalid token");
+        throw new AuthenticationException();
     }
 
 
     public PlaylistsDTO deletePlaylist(String token, int id) {
         if (isValidToken(token)) {
             String username = loginDAO.getUserByToken(token).getUser();
-                playlistDAO.deletePlaylist(id);
-                return playlistDAO.getPlaylist(username);
-            } else {
-                throw new RuntimeException("You do not have permission to delete this playlist");
-            }
+            playlistDAO.deletePlaylist(id);
+            return playlistDAO.getPlaylist(username);
+        } else {
+            throw new AuthenticationException();
         }
+    }
 
     public PlaylistsDTO updatePlaylist(String token, int id, PlaylistDTO playlistDTO) {
         if (isValidToken(token)) {
             String username = loginDAO.getUserByToken(token).getUser();
-                playlistDAO.updatePlaylist(id, playlistDTO);
-                return playlistDAO.getPlaylist(username);
-            } else {
-            throw new RuntimeException("You do not have permission to update this playlist");
+            playlistDAO.updatePlaylist(id, playlistDTO);
+            return playlistDAO.getPlaylist(username);
+        } else {
+            throw new AuthenticationException();
         }
     }
 
-    public TracksDTO getAllTracksInPlaylist(int playlistId, String token) {
+    public TracksDTO getTracksInPlaylist(int playlistId, String token) {
         if (isValidToken(token)) {
             return trackDAO.getAllTracksinPlaylist(playlistId);
         }

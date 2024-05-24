@@ -49,7 +49,7 @@ public class PlaylistResource {
     @GET
     @Path("/{id}/tracks")
     public TracksDTO getTracksInPlaylist(@PathParam("id") int id, @QueryParam("token") String token){
-        return playlistService.getAllTracksInPlaylist(id, token);
+        return playlistService.getTracksInPlaylist(id, token);
     }
 
     @POST

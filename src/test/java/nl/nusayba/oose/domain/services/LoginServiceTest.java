@@ -1,35 +1,46 @@
-//package nl.nusayba.oose.domain.services;
-//
-//import nl.nusayba.oose.domain.dto.LoginRequestDTO;
-//import nl.nusayba.oose.domain.exceptions.AuthenticationException;
-//import org.junit.jupiter.api.Test;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//
-//public class LoginServiceTest {
-//
-//    private LoginService loginService = new LoginService();
-//
-//    @Test
-//    public void testValidLogin() {
-//        LoginRequestDTO request = new LoginRequestDTO();
-//        request.setUser("user");
-//        request.setPassword("password");
-//
-//        LoginResponseDTO response = loginService.authenticate(request);
-//        assertNotNull(response);
-//        assertEquals("user", response.getUser());
-//        assertEquals("dummy-token", response.getToken());
-//    }
-//
-//    @Test
-//    public void testInvalidLogin() {
-//        LoginRequestDTO request = new LoginRequestDTO();
-//        request.setUser("invalidUser");
-//        request.setPassword("invalidPassword");
-//
-//        assertThrows(AuthenticationException.class, () -> {
-//            loginService.authenticate(request);
-//        });
-//    }
-//}
+package nl.nusayba.oose.domain.services;
+
+import nl.nusayba.oose.datasource.LoginDAO;
+import nl.nusayba.oose.domain.dto.LoginDTO;
+import nl.nusayba.oose.domain.dto.UserDTO;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class LoginServiceTest {
+    private LoginService sut;
+    private LoginDAO fixture;
+
+    @BeforeEach
+    public void setup() {
+        sut = new LoginService();
+        fixture = Mockito.mock(LoginDAO.class);
+        sut.setLoginDAO(fixture);
+    }
+
+    @Test
+    public void loginUserTest(){
+        // Arrange
+        UserDTO returnValue = new UserDTO();
+        returnValue.setToken("1234-1234-1234");
+        returnValue.setUser("meron");
+
+        LoginDTO login = new LoginDTO();
+        login.setUser("meron");
+        login.setPassword("password");
+
+        // Coverage
+        login.getPassword();
+
+        Mockito.when(fixture.getUserAndToken(Mockito.anyString())).thenReturn(returnValue);
+        Mockito.when(fixture.getUserAndToken(Mockito.any(LoginDTO.class))).thenReturn(login);
+
+        // Act
+        UserDTO result = sut.authenticate(login);
+
+        // Assert
+        assertEquals(returnValue.getToken(), result.getToken());
+    }
+}
