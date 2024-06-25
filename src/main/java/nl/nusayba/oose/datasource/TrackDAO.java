@@ -161,7 +161,7 @@ public class TrackDAO implements ITrackDAO {
                 trackDTO.setPlaycount(resultSet.getInt("playcount"));
                 trackDTO.setPublicationDate(resultSet.getString("publication_date"));
                 trackDTO.setDescription(resultSet.getString("description"));
-                trackDTO.setOfflineAvailable(resultSet.getBoolean("offline_available"));
+
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
@@ -187,7 +187,6 @@ public class TrackDAO implements ITrackDAO {
                 track.setPlaycount(resultSet.getInt("playcount"));
                 track.setPublicationDate(resultSet.getString("publication_date"));
                 track.setDescription(resultSet.getString("description"));
-                track.setOfflineAvailable(resultSet.getBoolean("offline_available"));
                 t.add(track);
             }
         } catch (SQLException e) {
@@ -218,9 +217,10 @@ public class TrackDAO implements ITrackDAO {
 
             System.out.println("Adding track to playlist");
             Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-            PreparedStatement statement = connection.prepareStatement("INSERT INTO PlaylistTracks (playlist_id, track_id) VALUES (?, ?)");
+            PreparedStatement statement = connection.prepareStatement("INSERT INTO PlaylistTracks (playlist_id, track_id, offline_available) VALUES (?, ?, ?)");
             statement.setInt(1, id);
             statement.setInt(2, trackDTO.getId());
+            statement.setBoolean(3, trackDTO.isOfflineAvailable()); // Adding the offline availability status
 
             statement.executeUpdate();
             connection.commit();
