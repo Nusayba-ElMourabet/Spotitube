@@ -8,6 +8,8 @@ import java.util.logging.Logger;
 public class DatabaseProperties {
     private Logger logger = Logger.getLogger(getClass().getName());
     private Properties properties;
+    private static DatabaseProperties instance;
+
 
     public DatabaseProperties() {
         properties = new Properties();
@@ -18,7 +20,12 @@ public class DatabaseProperties {
         }
     }
 
-
+    public static DatabaseProperties getInstance() {
+        if (instance == null) {
+            instance = new DatabaseProperties();
+        }
+        return instance;
+    }
     public String getUrl() {
         return properties.getProperty("database.url");
     }

@@ -23,8 +23,8 @@ public class TrackDAO implements ITrackDAO {
     private DatabaseProperties databaseProperties;
 
     @Inject
-    public void setDatabaseProperties(DatabaseProperties databaseProperties) {
-        this.databaseProperties = databaseProperties;
+    public void setDatabaseProperties() {
+        this.databaseProperties = DatabaseProperties.getInstance();
     }
 
     @Override
