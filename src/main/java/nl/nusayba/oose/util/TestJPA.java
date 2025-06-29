@@ -2,7 +2,6 @@ package nl.nusayba.oose.util;
 
 import jakarta.persistence.EntityManager;
 import nl.nusayba.oose.domain.entities.Playlist;
-import nl.nusayba.oose.domain.entities.User;
 
 import java.util.List;
 

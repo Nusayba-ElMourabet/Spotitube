@@ -61,7 +61,7 @@ Spotitube deployment diagram
 ### **Toelichting:**
 
 **Requirement:**
-Het deployment diagram raakt meerdere user stories zoals:
+Het deployment diagram raakt meerdere users stories zoals:
 
 - Als gebruiker wil ik kunnen inloggen zodat ik toegang krijg tot mijn gepersonaliseerde playlists.
 - Als gebruiker wil ik playlists kunnen aanmaken en beheren zodat ik mijn muziek kan organiseren.

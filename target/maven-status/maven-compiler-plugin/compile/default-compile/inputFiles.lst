@@ -7,10 +7,13 @@ D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\services\LoginService.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\util\DatabaseProperties.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\services\SpotitubeExceptionMapper.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\dto\PlaylistsDTO.java
+D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\util\TestJPA.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\repositories\UserRepository.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\dto\TrackDTO.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\interfaces\ILoginDAO.java
+D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\util\JPAUtil.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\dto\TracksDTO.java
+D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\entities\Users.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\datasource\TrackDAO.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\interfaces\IPlaylistDAO.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\entities\Playlist.java
@@ -20,8 +23,8 @@ D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\exceptions\AuthenticationE
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\SpotitubeApplication.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\interfaces\ITrackDAO.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\datasource\PlaylistDAO.java
-D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\entities\User.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\exceptions\SpotitubeException.java
+D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\repositories\LoginRepository.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\datasource\LoginDAO.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\entities\Track.java
 D:\DEA\Spotitube\src\main\java\nl\nusayba\oose\domain\dto\UserDTO.java

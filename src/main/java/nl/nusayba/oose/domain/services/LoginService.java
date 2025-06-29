@@ -1,6 +1,7 @@
 package nl.nusayba.oose.domain.services;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import nl.nusayba.oose.domain.dto.LoginDTO;
 import nl.nusayba.oose.domain.dto.UserDTO;
@@ -24,5 +25,9 @@ public class LoginService {
         } else {
             throw new AuthenticationException();
         }
+    }
+
+    public UserDTO getUserByToken(String token) {
+        return loginDAO.getUserByToken(token);
     }
 }

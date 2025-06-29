@@ -9,13 +9,13 @@ public class Playlist {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int id;
 
     private String name;
 
     @ManyToOne
     @JoinColumn(name = "owner_id")
-    private User owner;
+    private Users owner;
 
     @ManyToMany
     @JoinTable(
@@ -28,14 +28,14 @@ public class Playlist {
     public Playlist() {}
 
     // Getters en setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    public User getOwner() { return owner; }
-    public void setOwner(User owner) { this.owner = owner; }
+    public Users getOwner() { return owner; }
+    public void setOwner(Users owner) { this.owner = owner; }
 
     public List<Track> getTracks() { return tracks; }
     public void setTracks(List<Track> tracks) { this.tracks = tracks; }

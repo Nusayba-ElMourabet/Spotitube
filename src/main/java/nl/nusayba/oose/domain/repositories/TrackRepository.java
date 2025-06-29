@@ -1,27 +1,47 @@
 package nl.nusayba.oose.domain.repositories;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.transaction.Transactional;
+import nl.nusayba.oose.domain.entities.Playlist;
 import nl.nusayba.oose.domain.entities.Track;
 
 import java.util.List;
 
+@ApplicationScoped
 public class TrackRepository {
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @PersistenceContext(unitName = "spotitubePU")
+    private EntityManager em;
 
-    public Track findById(Long id) {
-        return entityManager.find(Track.class, id);
+    public List<Track> findTracksInPlaylist(int playlistId) {
+        return em.createQuery(
+                        "SELECT t FROM Track t JOIN t.playlists p WHERE p.id = :playlistId", Track.class)
+                .setParameter("playlistId", (long) playlistId)
+                .getResultList();
     }
 
-    public List<Track> findAll() {
-        return entityManager.createQuery("SELECT t FROM Track t", Track.class).getResultList();
+    public List<Track> findTracksNotInPlaylist(int playlistId) {
+        return em.createQuery(
+                        "SELECT t FROM Track t WHERE t.id NOT IN (SELECT t2.id FROM Track t2 JOIN t2.playlists p WHERE p.id = :playlistId)", Track.class)
+                .setParameter("playlistId", (long) playlistId)
+                .getResultList();
     }
 
-    @Transactional
-    public void save(Track track) {
-        entityManager.persist(track);
+    public void addTrackToPlaylist(int playlistId, Track track) {
+        // Eerst de playlist ophalen en dan toevoegen aan de relatie
+        Playlist playlist = em.find(Playlist.class, (long) playlistId);
+        if (playlist != null) {
+            playlist.getTracks().add(track);
+            em.merge(playlist);
+        }
+    }
+
+    public void deleteTrackFromPlaylist(int playlistId, int trackId) {
+        Playlist playlist = em.find(Playlist.class, (long) playlistId);
+        if (playlist != null) {
+            playlist.getTracks().removeIf(t -> t.getId() == trackId);
+            em.merge(playlist);
+        }
     }
 }

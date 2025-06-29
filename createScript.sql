@@ -45,8 +45,8 @@ CREATE TABLE PlaylistTracks (
 );
 
 -- Insert Users
-INSERT INTO Users (username, password, token, fullname) VALUES ('user', 'password', 'dummy-token', 'userfullname');
-INSERT INTO Users (username, password, token, fullname) VALUES ('user', 'password', 'dummy-token', 'Nusayba');
+INSERT INTO Users (username, password, token, fullname) VALUES ('users', 'password', 'dummy-token', 'userfullname');
+INSERT INTO Users (username, password, token, fullname) VALUES ('users', 'password', 'dummy-token', 'Nusayba');
 
 
 -- Insert Playlists
