@@ -1,15 +1,19 @@
 package nl.nusayba.oose.datasource;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import nl.nusayba.oose.domain.dto.PlaylistDTO;
 import nl.nusayba.oose.domain.dto.PlaylistsDTO;
 import nl.nusayba.oose.domain.dto.TrackDTO;
+import nl.nusayba.oose.domain.entities.Playlist;
+import nl.nusayba.oose.domain.entities.Track;
+import nl.nusayba.oose.domain.entities.User;
 import nl.nusayba.oose.domain.interfaces.IPlaylistDAO;
 
-import jakarta.inject.Inject;
-import jakarta.enterprise.context.ApplicationScoped;
-import nl.nusayba.oose.util.DatabaseProperties;
-
-import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -19,146 +23,151 @@ import java.util.logging.Logger;
 public class PlaylistDAO implements IPlaylistDAO {
     private Logger logger = Logger.getLogger(getClass().getName());
 
-    private DatabaseProperties databaseProperties;
-
-    @Inject
-    public void setDatabaseProperties() {
-        this.databaseProperties = DatabaseProperties.getInstance();
-    }
+    @PersistenceContext(unitName = "spotitubePU")
+    private EntityManager entityManager;
 
     @Override
-    public PlaylistsDTO getPlaylist(String user) {
+    public PlaylistsDTO getPlaylist(String username) {
         PlaylistsDTO playlistsDTO = new PlaylistsDTO();
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement("SELECT p.id, p.name, u.username FROM playlists p JOIN users u ON p.owner_id = u.id");
-             ResultSet resultSet = statement.executeQuery()) {
+        try {
+            List<Playlist> playlists = entityManager.createQuery(
+                            "SELECT p FROM Playlist p WHERE p.owner.username = :username", Playlist.class)
+                    .setParameter("username", username)
+                    .getResultList();
 
-            while (resultSet.next()) {
-                PlaylistDTO playlist = new PlaylistDTO();
-                playlist.setId(resultSet.getInt("id"));
-                playlist.setName(resultSet.getString("name"));
-                playlist.setOwner(resultSet.getString("username").equals(user));
-                List<TrackDTO> tracks = new ArrayList<>();
-                playlist.setTracks(tracks);
-                playlistsDTO.addPlaylist(playlist);
+            int totalDuration = 0;
+
+            for (Playlist playlist : playlists) {
+                PlaylistDTO dto = new PlaylistDTO();
+                dto.setId(playlist.getId());
+                dto.setName(playlist.getName());
+                dto.setOwner(playlist.getOwner().getUsername().equals(username));
+
+                List<TrackDTO> trackDTOs = new ArrayList<>();
+                for (Track track : playlist.getTracks()) {
+                    TrackDTO trackDTO = mapToDTO(track);
+                    trackDTOs.add(trackDTO);
+                    totalDuration += track.getDuration();
+                }
+                dto.setTracks(trackDTOs);
+                playlistsDTO.addPlaylist(dto);
             }
 
-            playlistsDTO.setLength(calculateTotalDuration());
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+            playlistsDTO.setLength(totalDuration);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error fetching playlists for user: " + username, e);
         }
         return playlistsDTO;
     }
 
     @Override
     public int calculateTotalDuration() {
-        int totalDuration = 0;
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement("SELECT SUM(t.duration) AS length FROM PlaylistTracks pt JOIN tracks t ON pt.track_id = t.id");
-             ResultSet resultSet = statement.executeQuery()) {
-
-            if (resultSet.next()) {
-                totalDuration = resultSet.getInt("length");
-            }
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        try {
+            Long total = entityManager.createQuery(
+                            "SELECT SUM(t.duration) FROM Track t", Long.class)
+                    .getSingleResult();
+            return total != null ? total.intValue() : 0;
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error calculating total duration", e);
+            return 0;
         }
-        return totalDuration;
     }
 
     @Override
+    @Transactional
     public void updatePlaylist(int id, PlaylistDTO playlistDTO) {
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement("UPDATE playlists SET name = ? WHERE id = ?")) {
-
-            statement.setString(1, playlistDTO.getName());
-            statement.setInt(2, id);
-            statement.executeUpdate();
-
-            connection.commit();
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        try {
+            Playlist playlist = entityManager.find(Playlist.class, id);
+            if (playlist != null) {
+                playlist.setName(playlistDTO.getName());
+                entityManager.merge(playlist);
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error updating playlist with ID: " + id, e);
         }
     }
 
     @Override
-    public void addPlaylist(String user, PlaylistDTO playlistDTO) {
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement("INSERT INTO playlists (name, owner_id) VALUES (?, (SELECT id FROM users WHERE username = ?))")) {
+    @Transactional
+    public void addPlaylist(String username, PlaylistDTO playlistDTO) {
+        try {
+            User user = entityManager.createQuery(
+                            "SELECT u FROM User u WHERE u.username = :username", User.class)
+                    .setParameter("username", username)
+                    .getSingleResult();
 
-            statement.setString(1, playlistDTO.getName());
-            statement.setString(2, user);
-            statement.executeUpdate();
-
-            connection.commit();
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+            Playlist playlist = new Playlist();
+            playlist.setName(playlistDTO.getName());
+            playlist.setOwner(user);
+            entityManager.persist(playlist);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error adding playlist for user: " + username, e);
         }
     }
+
+    @Override
+    @Transactional
     public void addTrackToPlaylist(int playlistId, int trackId) {
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement(
-                     "INSERT INTO PlaylistTracks (playlist_id, track_id) VALUES (?, ?)")) {
-            statement.setInt(1, playlistId);
-            statement.setInt(2, trackId);
-            statement.executeUpdate();
-            connection.commit();
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        try {
+            Playlist playlist = entityManager.find(Playlist.class, playlistId);
+            Track track = entityManager.find(Track.class, trackId);
+            if (playlist != null && track != null) {
+                playlist.getTracks().add(track);
+                entityManager.merge(playlist);
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error adding track to playlist", e);
         }
     }
 
     @Override
+    @Transactional
     public void deletePlaylist(int id) {
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement("DELETE FROM playlists WHERE id = ?")) {
-
-            deleteTracksFromPlaylist(id);
-
-            statement.setInt(1, id);
-            statement.executeUpdate();
-
-            connection.commit();
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
-        }
-    }
-
-    private void deleteTracksFromPlaylist(int id) {
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement("DELETE FROM PlaylistTracks WHERE track_id = ?")) {
-
-            statement.setInt(1, id);
-            statement.executeUpdate();
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        try {
+            Playlist playlist = entityManager.find(Playlist.class, id);
+            if (playlist != null) {
+                entityManager.remove(playlist);
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error deleting playlist with ID: " + id, e);
         }
     }
 
     @Override
     public PlaylistDTO getPlaylistById(int id) {
-        PlaylistDTO playlistDTO = new PlaylistDTO();
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement(
-                     "SELECT p.id, p.name, u.username " +
-                             "FROM playlists p JOIN users u ON p.owner_id = u.id " +
-                             "WHERE p.id = ?")) {
+        PlaylistDTO dto = new PlaylistDTO();
+        try {
+            Playlist playlist = entityManager.find(Playlist.class, id);
+            if (playlist != null) {
+                dto.setId(playlist.getId());
+                dto.setName(playlist.getName());
 
-            statement.setInt(1, id);
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                playlistDTO.setId(resultSet.getInt("id"));
-                playlistDTO.setName(resultSet.getString("name"));
-                playlistDTO.setTracks(new ArrayList<>());              }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+                List<TrackDTO> trackDTOs = new ArrayList<>();
+                for (Track track : playlist.getTracks()) {
+                    trackDTOs.add(mapToDTO(track));
+                }
+                dto.setTracks(trackDTOs);
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error fetching playlist by ID: " + id, e);
         }
-        return playlistDTO;
+        return dto;
+    }
+
+    private TrackDTO mapToDTO(Track track) {
+        TrackDTO dto = new TrackDTO();
+        dto.setId(track.getId());
+        dto.setTitle(track.getTitle());
+        dto.setPerformer(track.getPerformer());
+        dto.setDuration(track.getDuration());
+        dto.setAlbum(track.getAlbum());
+        dto.setPlaycount(track.getPlaycount());
+        if (track.getPublicationDate() != null) {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+            String formattedDate = formatter.format(track.getPublicationDate());
+            dto.setPublicationDate(formattedDate);
+        }        dto.setDescription(track.getDescription());
+        dto.setOfflineAvailable(track.isOfflineAvailable());
+        return dto;
     }
 }

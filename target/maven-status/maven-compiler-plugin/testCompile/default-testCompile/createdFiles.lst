@@ -1,1 +1,5 @@
-nl\nusayba\oose\domain\services\TrackServiceTest.class
+nl\nusayba\oose\domain\services\LoginServiceTest.class
+nl\nusayba\oose\domain\resources\PlaylistResourceTest.class
+nl\nusayba\oose\domain\services\PlaylistServiceTest.class
+nl\nusayba\oose\domain\resources\LoginResourceTest.class
+nl\nusayba\oose\domain\resources\TrackResourceTest.class

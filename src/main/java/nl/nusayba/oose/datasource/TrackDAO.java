@@ -1,252 +1,227 @@
 package nl.nusayba.oose.datasource;
 
-import nl.nusayba.oose.domain.dto.LoginDTO;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import nl.nusayba.oose.domain.dto.TrackDTO;
 import nl.nusayba.oose.domain.dto.TracksDTO;
+import nl.nusayba.oose.domain.entities.Playlist;
+import nl.nusayba.oose.domain.entities.Track;
 import nl.nusayba.oose.domain.interfaces.ITrackDAO;
-import nl.nusayba.oose.util.DatabaseProperties;
 
-import jakarta.inject.Inject;
-import jakarta.enterprise.context.ApplicationScoped;
-
-import javax.sound.midi.Track;
-import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @ApplicationScoped
 public class TrackDAO implements ITrackDAO {
+
     private Logger logger = Logger.getLogger(getClass().getName());
 
-    private DatabaseProperties databaseProperties;
-
-    @Inject
-    public void setDatabaseProperties() {
-        this.databaseProperties = DatabaseProperties.getInstance();
-    }
+    @PersistenceContext(unitName = "spotitubePU")
+    private EntityManager entityManager;
 
     @Override
     public TracksDTO getAllTracksinPlaylist(int playlistId) {
-        TracksDTO tracks = new TracksDTO();
-        try {
-            Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-            PreparedStatement statement = connection.prepareStatement("SELECT * FROM Tracks t join PlaylistTracks p on t.id = p.track_id where p.playlist_id = ?");
-            statement.setInt(1, playlistId);
-            ResultSet resultSet = statement.executeQuery();
-
-            while (resultSet.next()) {
-                TrackDTO track = new TrackDTO();
-                track.setId(resultSet.getInt("id"));
-                track.setTitle(resultSet.getString("title"));
-                track.setPerformer(resultSet.getString("performer"));
-                track.setDuration(resultSet.getInt("duration"));
-                track.setAlbum(resultSet.getString("album"));
-                track.setPlaycount(resultSet.getInt("playcount"));
-                track.setPublicationDate(resultSet.getString("publication_date"));
-                track.setDescription(resultSet.getString("description"));
-                track.setOfflineAvailable(resultSet.getBoolean("offline_available"));
-                tracks.addTrack(track);
-            }
-            tracks.setLength(calculateTotalDuration());
-
-            statement.close();
-            connection.close();
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-        return tracks;
-    }
-
-    @Override
-    public TracksDTO getAllTracks() {
         TracksDTO tracksDTO = new TracksDTO();
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement("SELECT * FROM Tracks");
-             ResultSet resultSet = statement.executeQuery()) {
-
-            while (resultSet.next()) {
-                TrackDTO track = new TrackDTO();
-                track.setId(resultSet.getInt("id"));
-                track.setTitle(resultSet.getString("title"));
-                track.setPerformer(resultSet.getString("performer"));
-                track.setDuration(resultSet.getInt("duration"));
-                track.setAlbum(resultSet.getString("album"));
-                track.setPlaycount(resultSet.getInt("playcount"));
-                track.setPublicationDate(resultSet.getString("publication_date"));
-                track.setDescription(resultSet.getString("description"));
-                track.setOfflineAvailable(resultSet.getBoolean("offline_available"));
-                tracksDTO.addTrack(track);
+        try {
+            Playlist playlist = entityManager.find(Playlist.class, playlistId);
+            if (playlist != null) {
+                List<TrackDTO> trackDTOs = new ArrayList<>();
+                int totalDuration = 0;
+                for (Track track : playlist.getTracks()) {
+                    TrackDTO dto = mapToDTO(track);
+                    trackDTOs.add(dto);
+                    totalDuration += track.getDuration();
+                }
+                tracksDTO.setTracks(trackDTOs);
+                tracksDTO.setLength(totalDuration);
             }
-            tracksDTO.setLength(calculateTotalDuration());
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error fetching tracks in playlist ID: " + playlistId, e);
         }
         return tracksDTO;
     }
 
     @Override
+    public TracksDTO getAllTracks() {
+        TracksDTO tracksDTO = new TracksDTO();
+        try {
+            List<Track> tracks = entityManager.createQuery("SELECT t FROM Track t", Track.class).getResultList();
+            List<TrackDTO> trackDTOs = new ArrayList<>();
+            int totalDuration = 0;
+
+            for (Track track : tracks) {
+                TrackDTO dto = mapToDTO(track);
+                trackDTOs.add(dto);
+                totalDuration += track.getDuration();
+            }
+            tracksDTO.setTracks(trackDTOs);
+            tracksDTO.setLength(totalDuration);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error fetching all tracks", e);
+        }
+        return tracksDTO;
+    }
+
+    @Override
+    @Transactional
     public void addTrack(TrackDTO trackDTO) {
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement("INSERT INTO tracks (title, performer, duration, album, playcount, publication_date, description, offline_available) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
-
-            statement.setString(1, trackDTO.getTitle());
-            statement.setString(2, trackDTO.getPerformer());
-            statement.setInt(3, trackDTO.getDuration());
-            statement.setString(4, trackDTO.getAlbum());
-            statement.setInt(5, trackDTO.getPlaycount());
-            statement.setString(6, trackDTO.getPublicationDate());
-            statement.setString(7, trackDTO.getDescription());
-            statement.setBoolean(8, trackDTO.isOfflineAvailable());
-            statement.executeUpdate();
-            connection.commit();
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        try {
+            Track track = mapToEntity(trackDTO);
+            entityManager.persist(track);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error adding track", e);
         }
     }
 
     @Override
+    @Transactional
     public void deleteTrack(int id) {
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement("DELETE FROM tracks WHERE id = ?")) {
-
-            statement.setInt(1, id);
-            statement.executeUpdate();
-            connection.commit();
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        try {
+            Track track = entityManager.find(Track.class, id);
+            if (track != null) {
+                entityManager.remove(track);
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error deleting track with ID: " + id, e);
         }
     }
 
     @Override
+    @Transactional
     public void updateTrack(int id, TrackDTO trackDTO) {
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement("UPDATE tracks SET title = ?, performer = ?, duration = ?, album = ?, playcount = ?, publication_date = ?, description = ?, offline_available = ? WHERE id = ?")) {
+        try {
+            Track track = entityManager.find(Track.class, id);
+            if (track != null) {
+                track.setTitle(trackDTO.getTitle());
+                track.setPerformer(trackDTO.getPerformer());
+                track.setDuration(trackDTO.getDuration());
+                track.setAlbum(trackDTO.getAlbum());
+                track.setPlaycount(trackDTO.getPlaycount());
 
-            statement.setString(1, trackDTO.getTitle());
-            statement.setString(2, trackDTO.getPerformer());
-            statement.setInt(3, trackDTO.getDuration());
-            statement.setString(4, trackDTO.getAlbum());
-            statement.setInt(5, trackDTO.getPlaycount());
-            statement.setString(6, trackDTO.getPublicationDate());
-            statement.setString(7, trackDTO.getDescription());
-            statement.setBoolean(8, trackDTO.isOfflineAvailable());
-            statement.setInt(9, id);
-            statement.executeUpdate();
-            connection.commit();
+                if (trackDTO.getPublicationDate() != null) {
+                    track.setPublicationDate(new SimpleDateFormat("yyyy-MM-dd").parse(trackDTO.getPublicationDate()));
+                }
 
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+                track.setDescription(trackDTO.getDescription());
+                track.setOfflineAvailable(trackDTO.isOfflineAvailable());
+                entityManager.merge(track);
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error updating track with ID: " + id, e);
         }
     }
 
     @Override
     public TrackDTO getTrackById(int id) {
-        TrackDTO trackDTO = new TrackDTO();
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement("SELECT * FROM tracks WHERE id = ?")) {
-
-            statement.setInt(1, id);
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                trackDTO.setId(resultSet.getInt("id"));
-                trackDTO.setTitle(resultSet.getString("title"));
-                trackDTO.setPerformer(resultSet.getString("performer"));
-                trackDTO.setDuration(resultSet.getInt("duration"));
-                trackDTO.setAlbum(resultSet.getString("album"));
-                trackDTO.setPlaycount(resultSet.getInt("playcount"));
-                trackDTO.setPublicationDate(resultSet.getString("publication_date"));
-                trackDTO.setDescription(resultSet.getString("description"));
-
+        TrackDTO dto = new TrackDTO();
+        try {
+            Track track = entityManager.find(Track.class, id);
+            if (track != null) {
+                dto = mapToDTO(track);
             }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error fetching track by ID: " + id, e);
         }
-        return trackDTO;
+        return dto;
     }
 
     @Override
     public TracksDTO getTracksNotInPlaylist(int playlistId) {
-        List<TrackDTO> t = new ArrayList<>();
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement(
-                     "SELECT * FROM tracks t WHERE t.id NOT IN (SELECT pt.track_id FROM PlaylistTracks pt WHERE pt.playlist_id = ?)")) {
-            statement.setInt(1, playlistId);
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                TrackDTO track = new TrackDTO();
-                track.setId(resultSet.getInt("id"));
-                track.setTitle(resultSet.getString("title"));
-                track.setPerformer(resultSet.getString("performer"));
-                track.setDuration(resultSet.getInt("duration"));
-                track.setAlbum(resultSet.getString("album"));
-                track.setPlaycount(resultSet.getInt("playcount"));
-                track.setPublicationDate(resultSet.getString("publication_date"));
-                track.setDescription(resultSet.getString("description"));
-                t.add(track);
+        TracksDTO tracksDTO = new TracksDTO();
+        try {
+            Playlist playlist = entityManager.find(Playlist.class, playlistId);
+            if (playlist != null) {
+                List<Track> allTracks = entityManager.createQuery("SELECT t FROM Track t", Track.class).getResultList();
+                List<TrackDTO> notInPlaylist = new ArrayList<>();
+                int totalDuration = 0;
+
+                for (Track track : allTracks) {
+                    if (!playlist.getTracks().contains(track)) {
+                        TrackDTO dto = mapToDTO(track);
+                        notInPlaylist.add(dto);
+                        totalDuration += track.getDuration();
+                    }
+                }
+                tracksDTO.setTracks(notInPlaylist);
+                tracksDTO.setLength(totalDuration);
             }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error fetching tracks not in playlist ID: " + playlistId, e);
         }
-        return new TracksDTO(t);
-    }
-
-    private int calculateTotalDuration() {
-        int totalDuration = 0;
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement("SELECT SUM(duration) AS length FROM tracks");
-             ResultSet resultSet = statement.executeQuery()) {
-
-            if (resultSet.next()) {
-                totalDuration = resultSet.getInt("length");
-            }
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
-        }
-        return totalDuration;
+        return tracksDTO;
     }
 
     @Override
-    public void addTrackToPlaylist(int id, TrackDTO trackDTO){
+    @Transactional
+    public void addTrackToPlaylist(int playlistId, TrackDTO trackDTO) {
         try {
+            Playlist playlist = entityManager.find(Playlist.class, playlistId);
+            Track track = entityManager.find(Track.class, trackDTO.getId());
 
-            System.out.println("Adding track to playlist");
-            Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-            PreparedStatement statement = connection.prepareStatement("INSERT INTO PlaylistTracks (playlist_id, track_id, offline_available) VALUES (?, ?, ?)");
-            statement.setInt(1, id);
-            statement.setInt(2, trackDTO.getId());
-            statement.setBoolean(3, trackDTO.isOfflineAvailable()); // Adding the offline availability status
-
-            statement.executeUpdate();
-            connection.commit();
-            statement.close();
-            connection.close();
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+            if (playlist != null && track != null) {
+                playlist.getTracks().add(track);
+                entityManager.merge(playlist);
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error adding track to playlist ID: " + playlistId, e);
         }
     }
 
     @Override
-    public void deleteTrackFromPlaylist(int id, int trackId) {
+    @Transactional
+    public void deleteTrackFromPlaylist(int playlistId, int trackId) {
         try {
-            Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-            PreparedStatement statement = connection.prepareStatement("DELETE FROM PlaylistTracks WHERE playlist_id = ? AND track_id = ?");
-            statement.setInt(1, id);
-            statement.setInt(2, trackId);
+            Playlist playlist = entityManager.find(Playlist.class, playlistId);
+            Track track = entityManager.find(Track.class, trackId);
 
-            statement.executeUpdate();
-            connection.commit();
-            statement.close();
-            connection.close();
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error communicating with database " + databaseProperties.connectionString(), e);
+            if (playlist != null && track != null) {
+                playlist.getTracks().remove(track);
+                entityManager.merge(playlist);
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error deleting track from playlist ID: " + playlistId, e);
         }
+    }
+
+    private TrackDTO mapToDTO(Track track) {
+        TrackDTO dto = new TrackDTO();
+        dto.setId(track.getId());
+        dto.setTitle(track.getTitle());
+        dto.setPerformer(track.getPerformer());
+        dto.setDuration(track.getDuration());
+        dto.setAlbum(track.getAlbum());
+        dto.setPlaycount(track.getPlaycount());
+
+        if (track.getPublicationDate() != null) {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+            dto.setPublicationDate(formatter.format(track.getPublicationDate()));
+        }
+
+        dto.setDescription(track.getDescription());
+        dto.setOfflineAvailable(track.isOfflineAvailable());
+        return dto;
+    }
+
+    private Track mapToEntity(TrackDTO dto) throws Exception {
+        Track track = new Track();
+        track.setTitle(dto.getTitle());
+        track.setPerformer(dto.getPerformer());
+        track.setDuration(dto.getDuration());
+        track.setAlbum(dto.getAlbum());
+        track.setPlaycount(dto.getPlaycount());
+
+        if (dto.getPublicationDate() != null) {
+            track.setPublicationDate(new SimpleDateFormat("yyyy-MM-dd").parse(dto.getPublicationDate()));
+        }
+
+        track.setDescription(dto.getDescription());
+        track.setOfflineAvailable(dto.isOfflineAvailable());
+        return track;
     }
 }

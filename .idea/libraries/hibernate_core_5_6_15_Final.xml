@@ -1,0 +1,33 @@
+<component name="libraryTable">
+  <library name="hibernate-core-5.6.15.Final">
+    <ANNOTATIONS>
+      <root url="jar://$MAVEN_REPOSITORY$/org/hibernate/hibernate-entitymanager/5.6.15.Final/hibernate-entitymanager-5.6.15.Final.jar!/" />
+      <root url="file://$MAVEN_REPOSITORY$/org/hibernate/common/hibernate-commons-annotations" />
+    </ANNOTATIONS>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/hibernate/hibernate-core/5.6.15.Final/hibernate-core-5.6.15.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/hibernate/hibernate-entitymanager/5.6.15.Final/hibernate-entitymanager-5.6.15.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/hibernate/hibernate-entitymanager/5.6.15.Final/hibernate-entitymanager-5.6.15.Final.jar!/" />
+      <root url="file://$MAVEN_REPOSITORY$/org/hibernate/common/hibernate-commons-annotations" />
+      <root url="file://$MAVEN_REPOSITORY$/org/hibernate/common/hibernate-commons-annotations" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/hibernate/hibernate-entitymanager/5.6.15.Final/hibernate-entitymanager-5.6.15.Final.jar!/" />
+      <root url="file://$MAVEN_REPOSITORY$/org/hibernate/common/hibernate-commons-annotations" />
+    </JAVADOC>
+    <NATIVE>
+      <root url="jar://$MAVEN_REPOSITORY$/org/hibernate/hibernate-entitymanager/5.6.15.Final/hibernate-entitymanager-5.6.15.Final.jar!/" />
+      <root url="file://$MAVEN_REPOSITORY$/org/hibernate/common/hibernate-commons-annotations" />
+    </NATIVE>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/hibernate/hibernate-entitymanager/5.6.15.Final/hibernate-entitymanager-5.6.15.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/hibernate/hibernate-entitymanager/5.6.15.Final/hibernate-entitymanager-5.6.15.Final.jar!/" />
+      <root url="file://$MAVEN_REPOSITORY$/org/hibernate/common/hibernate-commons-annotations" />
+      <root url="file://$MAVEN_REPOSITORY$/org/hibernate/common/hibernate-commons-annotations" />
+    </SOURCES>
+    <jarDirectory url="file://$MAVEN_REPOSITORY$/org/hibernate/common/hibernate-commons-annotations" recursive="false" />
+    <jarDirectory url="jar://$MAVEN_REPOSITORY$/org/hibernate/hibernate-entitymanager/5.6.15.Final/hibernate-entitymanager-5.6.15.Final.jar!/" recursive="false" />
+    <jarDirectory url="file://$MAVEN_REPOSITORY$/org/hibernate/common/hibernate-commons-annotations" recursive="false" type="SOURCES" />
+    <jarDirectory url="jar://$MAVEN_REPOSITORY$/org/hibernate/hibernate-entitymanager/5.6.15.Final/hibernate-entitymanager-5.6.15.Final.jar!/" recursive="false" type="SOURCES" />
+  </library>
+</component>

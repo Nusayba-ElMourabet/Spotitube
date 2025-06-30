@@ -1,98 +1,85 @@
 package nl.nusayba.oose.datasource;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import nl.nusayba.oose.domain.dto.LoginDTO;
 import nl.nusayba.oose.domain.dto.UserDTO;
+import nl.nusayba.oose.domain.entities.User;
 import nl.nusayba.oose.domain.interfaces.ILoginDAO;
-import nl.nusayba.oose.util.DatabaseProperties;
 
-import java.sql.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 public class LoginDAO implements ILoginDAO {
 
+    private Logger logger = Logger.getLogger(getClass().getName());
 
-    private String url;
-    private String username;
-    private String password;
-    private DatabaseProperties databaseProperties;
-
-//    @Inject
-//    public void init() {
-//        this.url = dbProperties.getUrl();
-//        this.username = dbProperties.getUsername();
-//        this.password = dbProperties.getPassword();
-//    }
-    @Inject
-    public void setDatabaseProperties(DatabaseProperties databaseProperties) {
-        this.databaseProperties = databaseProperties;
-    }
+    @PersistenceContext(unitName = "spotitubePU")
+    private EntityManager entityManager;
 
     @Override
     public LoginDTO getUserAndToken(LoginDTO request) {
         LoginDTO l = new LoginDTO();
         try {
-            Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-            PreparedStatement statement = connection.prepareStatement("SELECT * FROM Users WHERE username = ? AND password = ?");
-            statement.setString(1, request.getUser());
-            statement.setString(2, request.getPassword());
-                ResultSet resultset = statement.executeQuery();
+            User user = entityManager.createQuery(
+                            "SELECT u FROM User u WHERE u.username = :username AND u.password = :password", User.class)
+                    .setParameter("username", request.getUser())
+                    .setParameter("password", request.getPassword())
+                    .getSingleResult();
 
-                while (resultset.next()) {
-                    l.setUser(resultset.getString("username"));
-                    l.setPassword(resultset.getString("password"));
-                }
-                statement.close();
-                connection.close();
-            } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            if (user != null) {
+                l.setUser(user.getUsername());
+                l.setPassword(user.getPassword());
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error fetching user with username and password", e);
         }
         return l;
     }
 
     @Override
     public UserDTO getUserByToken(String token) {
-        UserDTO user = null;
-        try (Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-             PreparedStatement statement = connection.prepareStatement("SELECT * FROM Users WHERE token = ?")) {
-            statement.setString(1, token);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    user = new UserDTO();
-                    user.setUser(resultSet.getString("username"));
-                    user.setToken(resultSet.getString("token"));
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-        return user;
-    }
+        UserDTO userDTO = null;
+        try {
+            User user = entityManager.createQuery(
+                            "SELECT u FROM User u WHERE u.token = :token", User.class)
+                    .setParameter("token", token)
+                    .getSingleResult();
 
-    private String generateToken(String username) {
-        return username + "_token"; // Replace with your token generation logic
+            if (user != null) {
+                userDTO = new UserDTO();
+                userDTO.setUser(user.getUsername());
+                userDTO.setToken(user.getToken());
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error fetching user by token", e);
+        }
+        return userDTO;
     }
 
     @Override
-    public UserDTO getUserAndToken(String user) {
+    public UserDTO getUserAndToken(String username) {
         UserDTO u = new UserDTO();
         try {
-            Connection connection = DriverManager.getConnection(databaseProperties.connectionString());
-            PreparedStatement statement = connection.prepareStatement("SELECT fullname, token from Users where username = ?");
-            statement.setString(1, user);
-            ResultSet resultSet = statement.executeQuery();
+            User user = entityManager.createQuery(
+                            "SELECT u FROM User u WHERE u.username = :username", User.class)
+                    .setParameter("username", username)
+                    .getSingleResult();
 
-            while(resultSet.next()){
-                u.setUser(resultSet.getString("fullname"));
-                u.setToken(resultSet.getString("token"));
+            if (user != null) {
+                u.setUser(user.getFullname());
+                u.setToken(user.getToken());
             }
-            statement.close();
-            connection.close();
-        } catch (SQLException e){
-            System.out.println(e.getMessage());
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error fetching user and token by username", e);
         }
-        System.out.println(u.getToken() +  u.getUser());
         return u;
+    }
+
+    private String generateToken(String username) {
+        return username + "_token";  // Je eigen token logica hier
     }
 }
